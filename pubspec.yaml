@@ -1,0 +1,94 @@
+name: tinderapp
+description: A new Flutter project.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.18.2 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  lottie:
+  pin_input_text_field: ^4.5.0
+  syncfusion_flutter_datepicker: 19.4.53
+  date_format:
+  mapbox_autocomplete_search_widget: ^0.0.6
+  flutter_tindercard:
+  image_picker: ^0.8.6
+  open_filex: ^4.3.2
+  path_provider:
+  mime:
+  file_picker:
+  uuid:
+  font_awesome_flutter: ^10.4.0
+  emoji_picker_flutter:
+  story_view: ^0.14.0
+  flutter_instagram_stories: ^1.0.3
+  cloud_firestore: ^4.5.0
+  firebase_core:
+  swipedetector:
+  line_icons:
+  flutter_svg:
+  country_code_picker: ^3.0.0
+  flutter_custom_clippers:
+  percent_indicator: ^4.2.3
+  carousel_slider:
+  permission_handler:
+  image_cropper: ^3.0.1
+  get:
+  dotted_border:
+  firebase_auth:
+  google_sign_in: ^6.0.2
+  firebase_storage: ^11.1.1
+  shared_preferences: ^2.1.0
+  flutter_countdown_timer: ^4.1.0
+  wave: ^0.2.2
+  flutter_bloc: ^8.1.2
+  cached_network_image: ^3.2.3
+  flutter_screenutil: ^5.7.0
+  pinput: ^2.2.31
+  flutter_firebase_chat_core: ^1.6.4
+  firebase_database: ^10.2.1
+  firebase_messaging: ^14.6.1
+  flutter_insta: ^1.0.1
+  flutter_web_auth: ^0.5.0
+  chat_bubbles: ^1.4.1
+  geolocator: ^9.0.2
+  geocoding: ^2.1.0
+  photo_view:
+  dashed_circle: ^0.0.2
+  photo_manager: ^2.6.0
+  camera: ^0.10.5
+  video_player: ^2.6.1
+  equatable: ^2.0.5
+  stories_editor: ^0.2.2
+  share_plus: ^7.0.1
+  path:
+  just_the_tooltip: ^0.0.12
+
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+  change_app_package_name: ^1.1.0
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/lottie/
+    - assets/icons/
+    - assets/
+    - assets/girls/
+    - assets/images/
+    - assets/messages.json
+    - assets/insta_images/

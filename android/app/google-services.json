@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "169582681483",
+    "project_id": "datingapp-35546",
+    "storage_bucket": "datingapp-35546.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169582681483:android:8b77da0941ff7ee4d4e38e",
+        "android_client_info": {
+          "package_name": "com.example.tinderapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "169582681483-ufkj86pqdqrp9enpukar8gkeekoa4dqr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tinderapp",
+            "certificate_hash": "5433c7fd623dd63738e317501d7a6ab873548cc9"
+          }
+        },
+        {
+          "client_id": "169582681483-radkgtldlnloakt41akufttj03jl7kli.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpSuqWgN7LhDxiSNu3BWEwtV22S3unbvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "169582681483-fk2ivou5a4nn36n0rkh0s6i2i65vs0i1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
