@@ -1,167 +1,304 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../../constants.dart';
 import '../../model/chatModel.dart';
 import '../chat_components/conversation_screen_ui.dart';
 
 class ChatScreenUi extends StatefulWidget {
   const ChatScreenUi({Key? key}) : super(key: key);
-
   @override
   State<ChatScreenUi> createState() => _ChatScreenUiState();
 }
-
-class _ChatScreenUiState extends State<ChatScreenUi> {
+class _ChatScreenUiState extends State<ChatScreenUi>
+    with SingleTickerProviderStateMixin {
   final firebaseAuth = FirebaseAuth.instance;
   late final String currentUserId;
   late List<User> users;
+  int currentIndex = 0;
+  int? tappedIndex;
+  Timer? _timer;
   @override
   void initState() {
     final firebaseUser = firebaseAuth.currentUser;
     currentUserId = firebaseUser!.uid;
     users = [];
+    _startTimer();
     super.initState();
   }
-
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      // Check if there are more chat items to display
+      if (currentIndex < dummyData.length) {
+        setState(() {
+          currentIndex++;
+        });
+      } else {
+        _timer?.cancel(); // Cancel the timer when all chat items are displayed
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     final firebaseAuth = FirebaseAuth.instance;
     final firebaseUser = firebaseAuth.currentUser!;
     final userId = firebaseUser.uid;
-    final DocumentReference user =
-        FirebaseFirestore.instance.collection('users').doc(userId);
-
-    final Stream<DocumentSnapshot> userStream = user.snapshots();
-
     return Expanded(
-        child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              final docs = snapshot.data!.docs;
-              users = docs
-                  .where((doc) => doc.id != currentUserId)
-                  .map((doc) => User(
-                        id: doc.id,
-                        username:
-                            (doc.data() as Map<String, dynamic>)['username'] ??
-                                '',
-                        images: List<String>.from(
-                            (doc.data() as Map<String, dynamic>)['images'] ??
-                                []),
-                      ))
-                  .toList();
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(topLeft: containerRadius),
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(FirebaseAuth.instance.currentUser?.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const CircularProgressIndicator();
+          }
+          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          var usersss =
+          userData.containsKey('Match_with') ? userData['Match_with'] : [];
+          if (usersss.isEmpty) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.5,
+              width: MediaQuery.of(context).size.width,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(20),
+                  topLeft: Radius.circular(20),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 8, top: 10),
-                  child: ListView.builder(
-                      itemCount: users.length,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, i) {
-                        final user = users[i] ;
-                        return Column(
-                          children: [
-                            ListTile(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => chatpage(email: firebaseUser.phoneNumber.toString(),chatName: user.username.toString(),profilepic :user.images[i])
-                                  ),
-                                );
-                              },
-                              leading: CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                  user.images[i],
+                color: Colors.white,
+              ),
+              child: ListView.builder(
+                itemCount: currentIndex,
+                scrollDirection: Axis.vertical,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (context, i) {
+                  final item = dummyData[i];
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FakeChat(
+                                email: item.name!,
+                                name: item.name!,
+                                profilePic: item.avatarUrl!,
+                              ),
+                            ),
+                          );
+                        },
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(
+                            item.avatarUrl!, // Assuming the first image is the profile picture
+                          ),
+                          radius: 26,
+                          child: item.online!
+                              ? Container(
+                            alignment: Alignment.bottomRight,
+                            child: Container(
+                              height: 20,
+                              width: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  width: 2,
+                                  color: Colors.white,
                                 ),
-                                radius: 26,
-                                child: dummyData[i].online!
-                                    ? Container(
-                                        margin: const EdgeInsets.only(
-                                            bottom: 40, right: 40),
-                                        width: 20,
-                                        height: 20,
-                                        decoration: BoxDecoration(
-                                          color: Colors.pinkAccent,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            width: 2,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : Container(),
                               ),
-                              title: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    user.username,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    dummyData[i].time!,
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+                            ),
+                          )
+                              : Container(),
+                        ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              item.name!,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                               ),
-                              subtitle: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(
-                                    children: [
-                                      if (dummyData[i].seen!)
-                                        Icon(
-                                          Icons.done_all,
-                                          size: 18,
-                                          color: Colors.blue[600],
-                                        ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        dummyData[i].message!,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Divider(
-                                    thickness: 1,
-                                    color: Colors.grey[300],
-                                  ),
-                                ],
+                            ),
+                            Text(
+                              item.time!,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
-                        );
-                      }),
-                ),
-              );
-            }));
+                        ),
+                        subtitle: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                if (item.seen!)
+                                  Icon(
+                                    Icons.done_all,
+                                    size: 18,
+                                    color: Colors.blue[600],
+                                  ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  item.message!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Divider(
+                              thickness: 2,
+                              color: Colors.grey[300],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
+              ),
+            );
+          }
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(topLeft: containerRadius),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, right: 8, top: 10),
+              child: ListView.builder(
+                itemCount: usersss.length,
+                physics: const BouncingScrollPhysics(),
+                itemBuilder: (context, i) {
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(usersss[i])
+                        .get(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Container(); // You can show a placeholder or loading state
+                      }
+                      var userData =
+                      snapshot.data!.data() as Map<String, dynamic>;
+                      var imageUrl = userData[
+                      'images']; // Assuming you have a field 'profileImageUrl' in the user document
+                      var name = userData['username'];
+                      return Column(
+                        children: [
+                          ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ConversationScreenUI(
+                                    email:
+                                    userId,
+                                    name: name,
+                                    profilePic: imageUrl[i],
+                                  ),
+                                ),
+                              );
+                            },
+                            leading: CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                imageUrl.isNotEmpty
+                                    ? imageUrl[i]
+                                    : '', // Assuming the first image is the profile picture
+                              ),
+                              radius: 26,
+                              child: dummyData[i].online!
+                                  ? Container(
+                                alignment: Alignment.bottomRight,
+                                child: Container(
+                                  height: 20,
+                                  width: 20,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      width: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              )
+                                  : Container(),
+                            ),
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  dummyData[i].time!,
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  children: [
+                                    if (dummyData[i].seen!)
+                                      Icon(
+                                        Icons.done_all,
+                                        size: 18,
+                                        color: Colors.blue[600],
+                                      ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      dummyData[i].message!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Divider(
+                                  thickness: 1,
+                                  color: Colors.grey[300],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
