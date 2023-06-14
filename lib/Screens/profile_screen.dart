@@ -15,9 +15,6 @@ import '../data/explore_json.dart';
 double total = 0;
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({
-    super.key,
-  });
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -109,12 +106,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Container(
                         width: size.width.w,
-                        height: size.height * 0.5.h,
+                        height: size.height * 0.4.h,
                         decoration:
                             const BoxDecoration(color: white, boxShadow: []),
                         child: Padding(
                           padding: const EdgeInsets.only(
-                              left: 30, right: 30, top: 40),
+                              left: 30, right: 30),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [

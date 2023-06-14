@@ -483,7 +483,7 @@ class SettingOffers extends StatelessWidget {
   final String texts;
   final String img;
   const SettingOffers({
-    super.key,
+
     required this.colors,
     required this.texts,
     required this.img,

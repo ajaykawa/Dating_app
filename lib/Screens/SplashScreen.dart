@@ -5,7 +5,6 @@ import 'package:tinderapp/Screens/startScreen.dart';
 import 'package:tinderapp/utils/navigationbar.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
 
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -22,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final nextScreen =
-        userId != null ? const MyNavigationBar() : const StartScreen();
+        userId != null ?  MyNavigationBar() : const StartScreen();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => nextScreen),
     );

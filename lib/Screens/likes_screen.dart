@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:tinderapp/Screens/profile_card.dart';
 import 'package:tinderapp/Screens/toppicks.dart';
 
@@ -7,7 +10,6 @@ import '../const.dart';
 import '../data/likes_json.dart';
 
 class LikesPage extends StatefulWidget {
-  const LikesPage({super.key});
 
   @override
   _LikesPageState createState() => _LikesPageState();
@@ -104,125 +106,147 @@ class _LikesPageState extends State<LikesPage> {
 
   Widget getBody() {
     var size = MediaQuery.of(context).size;
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) {
-            return CardDetails(
-              profile: '',
-              pic: '',
-            );
-          },
-        ));
-      },
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 90),
-        children: [
-          const Divider(
-            thickness: 0.8,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 5, right: 5),
-            child: Wrap(
-              spacing: 5,
-              runSpacing: 5,
-              children: List.generate(
-                likes_json.length,
-                (index) {
-                  return SizedBox(
-                    width: (size.width - 15) / 2,
-                    height: 250,
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: (size.width - 15) / 2,
-                          height: 250,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              image: DecorationImage(
-                                  image: AssetImage((likes_json[index]['img'])),
-                                  fit: BoxFit.cover)),
-                        ),
-                        Container(
-                          width: (size.width - 15) / 2,
-                          height: 250,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              gradient: LinearGradient(
-                                  colors: [
-                                    black.withOpacity(0.25),
-                                    black.withOpacity(0),
-                                  ],
-                                  end: Alignment.topCenter,
-                                  begin: Alignment.bottomCenter)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              likes_json[index]['active']
-                                  ? Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8, bottom: 8),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: const BoxDecoration(
-                                                color: green,
-                                                shape: BoxShape.circle),
-                                          ),
-                                          const SizedBox(
-                                            width: 5,
-                                          ),
-                                          const Text(
-                                            "Recently Active",
-                                            style: TextStyle(
-                                              color: white,
-                                              fontSize: 14,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    )
-                                  : Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8, bottom: 8),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: const BoxDecoration(
-                                                color: grey,
-                                                shape: BoxShape.circle),
-                                          ),
-                                          const SizedBox(
-                                            width: 5,
-                                          ),
-                                          const Text(
-                                            "Offline",
-                                            style: TextStyle(
-                                              color: white,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 90),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 5, right: 5),
+          child: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.uid)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const CircularProgressIndicator();
+              }
+
+              var userData = snapshot.data!.data() as Map<String, dynamic>;
+              var yourUserLikes = userData.containsKey('other Likes') ? userData['other Likes'] : '';
+
+              if (yourUserLikes.isEmpty) {
+                return Container(height : MediaQuery.of(context).size.height*0.5 ,width: MediaQuery.of(context).size.width ,child: Column(mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset('assets/lottie/notfound.json',height: MediaQuery.of(context).size.height*0.2),
+                    Text('No Likes',style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold,fontFamily: 'Times New Roman'),)
+                  ],
+                ));
+              }
+
+              return Wrap(
+                spacing: 5,
+                runSpacing: 5,
+                children: List.generate(
+                  yourUserLikes.length,
+                      (index) {
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(yourUserLikes[index])
+                          .get(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Container(); // You can show a placeholder or loading state
+                        }
+
+                        var userData = snapshot.data!.data() as Map<String, dynamic>;
+                        var imageUrl = userData['images']; // Assuming you have a field 'profileImageUrl' in the user document
+                        var name = userData['username'];
+
+                        return Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: SizedBox(
+                            width: (size.width - 15) / 2,
+                            height: 210,
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                                  return CardDetails(
+                                    profile: name,
+                                    pic: imageUrl[0] ?? '',
+                                  );
+                                }));
+                              },
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: (size.width - 15) / 2,
+                                    height: 250,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: DecorationImage(
+                                        image: NetworkImage(imageUrl[0] ?? ''), // Load image from the URL
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                            ],
+                                  ),
+                                  Container(
+                                    width: (size.width - 15) / 2,
+                                    height: 250,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          black.withOpacity(0.25),
+                                          black.withOpacity(0),
+                                        ],
+                                        end: Alignment.topCenter,
+                                        begin: Alignment.bottomCenter,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                            bottom: 8,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: const BoxDecoration(
+                                                  color: green,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                width: 5,
+                                              ),
+                                              Text(
+                                                name ?? '',
+                                                style: const TextStyle(
+                                                  color: white,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
+
 
   Widget getFooter() {
     var size = MediaQuery.of(context).size;

@@ -7,15 +7,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tinderapp/Screens/profile_card.dart';
-import '../const.dart';
-import '../data/explore_json.dart';
-import '../data/icons.dart';
-import '../widgets/filters_home_page.dart';
+import 'package:tinderapp/const.dart';
+import 'package:tinderapp/data/explore_json.dart';
+import 'package:tinderapp/data/icons.dart';
+import 'package:tinderapp/widgets/filters_home_page.dart';
+import 'navigationbar.dart';
 
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({super.key});
-
   @override
   _ExplorePageState createState() => _ExplorePageState();
 }
@@ -31,11 +31,14 @@ class _ExplorePageState extends State<ExplorePage>
   bool labelVisible = false;
   List label = [];
   String? labelType;
+  int currentIndex = 0; // Current index of the card
+  List<int> swipedIndices = [];
   List<int> _swipedIndices = [];
   int? previousIndex;
+  AnimationController? _animationController;
+  late SharedPreferences sharedPreferences;
   @override
   void initState() {
-    super.initState();
     final firebaseUser = firebaseAuth.currentUser;
     currentUserId = firebaseUser!.uid;
 
@@ -44,8 +47,28 @@ class _ExplorePageState extends State<ExplorePage>
       itemsTemp = explore_json;
       itemLength = explore_json.length;
     });
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    restoreLastSwipedIndex();
+    super.initState();
   }
 
+
+  Future<void> restoreLastSwipedIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    final restoredIndex = prefs.getInt('lastSwipedIndex') ?? 0;
+    setState(() {
+      currentIndex = restoredIndex;
+    });
+  }
+
+  Future<void> saveSwipedCardIndex(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    swipedIndices.add(index);
+    await prefs.setInt('lastSwipedIndex', index);
+  }
   void showLeftLabel() {
     setState(() {
       labelVisible = true;
@@ -72,22 +95,75 @@ class _ExplorePageState extends State<ExplorePage>
     return '${sortedUserIds[0]}_${sortedUserIds[1]}';
   }
 
-  void _scaleDialog() {
+  @override
+  void dispose() {
+    _animationController?.dispose();
+    super.dispose();
+  }
+
+  void _playAnimation() {
+    if (_animationController!.isCompleted) {
+      _animationController!.reverse();
+    } else {
+      _animationController!.forward();
+    }
+  }
+
+  void _scaleDialog(BuildContext context) {
     showGeneralDialog(
       context: context,
-      pageBuilder: (ctx, a1, a2) {
-        return Container();
+      pageBuilder: (BuildContext ctx, Animation<double> animation,
+          Animation<double> secondaryAnimation) {
+        return Container(); // Replace this with your desired page widget
       },
-      transitionBuilder: (ctx, a1, a2, child) {
-        var curve = Curves.easeInOut.transform(a1.value);
+      transitionBuilder: (BuildContext ctx, Animation<double> animation,
+          Animation<double> secondaryAnimation, Widget child) {
+        var curve = Curves.easeInOut.transform(animation.value);
         return Transform.scale(
           scale: curve,
-          child: Lottie.asset('assets/lottie/match.json'),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Stack(
+              children: [
+                Lottie.asset('assets/lottie/match.json'),
+                GestureDetector(
+                  onTap: () {
+                    _playAnimation();
+                    Future.delayed(const Duration(seconds: 1), () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return MyNavigationBar();
+                      }));
+                    });
+                  },
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                            'Woah!! You Got a \nmatch You want\n to Text him/her ..?',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.red),
+                            textAlign: TextAlign.center),
+                        Lottie.asset(
+                          'assets/lottie/send.json', // Replace with your animation file
+                          controller: _animationController,
+                          animate: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
-      transitionDuration: const Duration(seconds: 3),
+      transitionDuration: const Duration(seconds: 2),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +174,7 @@ class _ExplorePageState extends State<ExplorePage>
     );
   }
 
-  Widget getBody() {
+  getBody() {
     var size = MediaQuery.of(context).size;
     Future<bool> showExitPopup() async {
       return await showDialog(
@@ -138,6 +214,7 @@ class _ExplorePageState extends State<ExplorePage>
           }
 
           final docs = snapshot.data!.docs;
+
           users = docs
               .where((doc) => doc.id != currentUserId)
               .map((doc) => User(
@@ -148,6 +225,7 @@ class _ExplorePageState extends State<ExplorePage>
                         (doc.data() as Map<String, dynamic>)['images'] ?? []),
                   ))
               .toList();
+
           final firebaseAuth = FirebaseAuth.instance;
           return Padding(
             padding: const EdgeInsets.only(
@@ -177,13 +255,14 @@ class _ExplorePageState extends State<ExplorePage>
                             Radius.circular(12),
                           ),
                           border: Border.all(
-                              width: 1, color: Colors.grey.withOpacity(0.7)),
+                            width: 1,
+                            color: Colors.grey.withOpacity(0.7),
+                          ),
                         ),
                         child: GestureDetector(
                           onTap: () {
                             showModalBottomSheet(
                               enableDrag: true,
-                              useSafeArea: true,
                               context: context,
                               builder: (context) {
                                 return const Filters();
@@ -199,221 +278,271 @@ class _ExplorePageState extends State<ExplorePage>
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: size.height,
-                  child: TinderSwapCard(
-                    totalNum: itemLength,
-                    cardController: controller = CardController(),
-                    swipeUpdateCallback:
-                        (DragUpdateDetails details, Alignment align) {
-                      if (align.y < -0.5) {
-                        showUpLabel();
-                        // labelVisible = false;
-                      } else if (align.x < -0.5) {
-                        showLeftLabel();
-                        _swipedIndices.removeLast();
-                      } else if (align.x > 0.5) {
-                        showRightLabel();
-                        _swipedIndices.removeLast();
-                      } else {
+                if (users.isNotEmpty)
+                  SizedBox(
+                    height: size.height,
+                    child: TinderSwapCard(
+                      totalNum: itemLength,
+                      cardController: controller = CardController(),
+                      swipeUpdateCallback:
+                          (DragUpdateDetails details, Alignment align) {
+                        if (align.y < -0.5) {
+                          showUpLabel();
+                          // labelVisible = false;
+                        } else if (align.x < -0.5) {
+                          showLeftLabel();
+                        } else if (align.x > 0.5) {
+                          showRightLabel();
+                        } else {
+                          setState(() {
+                            labelVisible = false;
+                          });
+                        }
+                      },
+                      swipeCompleteCallback:
+                          (CardSwipeOrientation orientation, int index) async {
+                        labelVisible = false;
+                        if (index == (itemsTemp.length - 1)) {
+                          setState(() {
+                            itemLength = itemsTemp.length - 1;
+                            itemLength = users.length;
+                          });
+                        }
+                        _swipedIndices.add(index);
+                        saveSwipedCardIndex(index);
                         setState(() {
-                          labelVisible = false;
+                          currentIndex = index; // Update the currentIndex
                         });
-                      }
-                    },
-                       swipeCompleteCallback: (CardSwipeOrientation orientation, int index) {
-                labelVisible = false;
-                if (index == (itemsTemp.length - 1)) {
-                setState(() {
-                itemLength = itemsTemp.length - 1;
-                });
-                }
-                _swipedIndices.add(index);
+                        final cardData = users[index];
+                        final myUserId = firebaseAuth.currentUser!.uid;
+                        final myUserRef = FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(myUserId);
+                        final yourUserId = users[index % users.length].id;
+                        final yourUserRef = FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(yourUserId);
+                        if (orientation == CardSwipeOrientation.LEFT) {
+                          // Save card in 'dislikes' field
+                          myUserRef.update({
+                            'dislikes': FieldValue.arrayUnion([cardData.id]),
+                          });
+                        } else if (orientation == CardSwipeOrientation.RIGHT) {
+                          // Save card in 'likes' field
+                          myUserRef.update({
+                            'My Likes': FieldValue.arrayUnion([cardData.id]),
+                          });
+                          yourUserRef.update({
+                            'other Likes': FieldValue.arrayUnion([myUserId]),
+                          });
+                          // Check if the other user also liked my card
+                          yourUserRef.get().then((yourUserDoc) {
+                            final yourUserLikes = List<String>.from(
+                                yourUserDoc.data()!['My Likes']);
+                            if (yourUserLikes.contains(myUserId)) {
+                              // Save the match in Firebase
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(myUserId)
+                                  .update({
+                                'Match_with':
+                                    FieldValue.arrayUnion([yourUserId])
+                              });
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(yourUserId)
+                                  .update({
+                                'Match_with': FieldValue.arrayUnion([myUserId])
+                              }).then((_) {
+                                // Show the match image or perform any other action
+                                // You can use a Snack-bar or Dialog to show the match
+                                _scaleDialog(context);
+                              }).catchError((error) {
+                                if (kDebugMode) {
+                                  print('Failed to save match: $error');
+                                }
+                              });
+                            }
+                          }).catchError((error) {
+                            if (kDebugMode) {
+                              print(
+                                  'Failed to fetch your user\'s data: $error');
+                            }
+                          }).catchError((error) {
+                            if (kDebugMode) {
+                              print('Failed to save like: $error');
+                            }
+                          });
+                        } else if (orientation == CardSwipeOrientation.UP) {
+                          // Save card in 'super-likes' field
+                          myUserRef.update({
+                            'super-likes': FieldValue.arrayUnion([cardData.id]),
+                          });
+                        }
+                      },
 
-                final cardData = users[index];
-                final myUserId = firebaseAuth.currentUser!.uid;
-                final myUserRef = FirebaseFirestore.instance.collection('users').doc(myUserId);
-                final yourUserId = users[index % users.length].id;
-                final yourUserRef = FirebaseFirestore.instance.collection('users').doc(yourUserId);
+                      maxWidth: MediaQuery.of(context).size.width,
+                      maxHeight: MediaQuery.of(context).size.height * 0.6,
+                      minWidth: MediaQuery.of(context).size.width * 0.75,
+                      minHeight: MediaQuery.of(context).size.height * 0.4,
 
-                if (orientation == CardSwipeOrientation.LEFT) {
-                // Save card in 'dislikes' field
-                myUserRef.update({
-                'dislikes': FieldValue.arrayUnion([cardData.id]),
-                });
-                } else if (orientation == CardSwipeOrientation.RIGHT) {
-                // Save card in 'likes' field
-                myUserRef.update({
-                'likes': FieldValue.arrayUnion([cardData.id]),
-                }).then((_) {
-                // Check if the other user also liked my card
-                yourUserRef.get().then((yourUserDoc) {
-                final yourUserLikes = List<String>.from(
-                yourUserDoc.data()!['likes'] ?? [],
-                );
-                if (yourUserLikes.contains(cardData.id)) {
-                // Both users liked each other, it's a match!
-                final matchId = generateMatchId(myUserId, yourUserId);
+                      cardBuilder: (context, index) {
 
-                // Save the match in Firebase
-                FirebaseFirestore.instance.collection('matches').doc(matchId).set({
-                'user1': myUserId,
-                'user2': yourUserId,
-                'timestamp': FieldValue.serverTimestamp(),
-                }).then((_) {
-                // Show the match image or perform any other action
-                // You can use a Snack-bar or Dialog to show the match
-                _scaleDialog();
-                }).catchError((error) {
-                if (kDebugMode) {
-                print('Failed to save match: $error');
-                }
-                });
-                }
-                }).catchError((error) {
-                if (kDebugMode) {
-                print('Failed to fetch your user\'s data: $error');
-                }
-                });
-                }).catchError((error) {
-                if (kDebugMode) {
-                print('Failed to save like: $error');
-                }
-                });
-                } else if (orientation == CardSwipeOrientation.UP) {
-                // Save card in 'super-likes' field
-                myUserRef.update({
-                'super-likes': FieldValue.arrayUnion([cardData.id]),
-                });
-                }
-                },
-
-                  maxWidth: MediaQuery.of(context).size.width,
-                    maxHeight: MediaQuery.of(context).size.height * 0.6,
-                    minWidth: MediaQuery.of(context).size.width * 0.75,
-                    minHeight: MediaQuery.of(context).size.height * 0.4,
-                    cardBuilder: (context, index) {
-                      final user = users[index % users.length];
-                      return Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                    color: grey.withOpacity(0.3),
-                                    blurRadius: 5,
-                                    spreadRadius: 2),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Stack(
-                                children: [
-                                  index < users.length
-                                      ? SizedBox(
-                                          width: size.width.w,
-                                          height: size.height * 0.8.h,
-                                          child: Image.network(user.images[0],
-                                              fit: BoxFit.cover))
-                                      : Container(
-                                          width: size.width,
-                                          height: size.height,
-                                          decoration: BoxDecoration(
-                                            image: DecorationImage(
-                                                image: AssetImage(
-                                                    itemsTemp[index]['img']),
-                                                fit: BoxFit.cover),
-                                          ),
-                                        ),
-                                  Container(
-                                    width: size.width,
-                                    height: size.height,
-                                    decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                            colors: [
-                                          black.withOpacity(0.25),
-                                          black.withOpacity(0),
-                                        ],
-                                            end: Alignment.topCenter,
-                                            begin: Alignment.bottomCenter)),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Row(
-                                            children: [
-                                              SizedBox(
-                                                width: size.width * 0.70,
-                                                child: Column(
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Text(
-                                                          index < users.length
-                                                              ? user.username
-                                                              : itemsTemp[index]
-                                                                  ['name'],
-                                                          style: const TextStyle(
+                        final user = users[index % users.length];
+                        return Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                      color: grey.withOpacity(0.3),
+                                      blurRadius: 5,
+                                      spreadRadius: 2),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Stack(
+                                  children: [
+                                    SizedBox(
+                                        width: size.width.w,
+                                        height: size.height * 0.8.h,
+                                        child: Image.network(user.images[0],
+                                            fit: BoxFit.cover)),
+                                    Container(
+                                      width: size.width,
+                                      height: size.height,
+                                      decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                              colors: [
+                                            black.withOpacity(0.25),
+                                            black.withOpacity(0),
+                                          ],
+                                              end: Alignment.topCenter,
+                                              begin: Alignment.bottomCenter)),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8),
+                                            child: Row(
+                                              children: [
+                                                SizedBox(
+                                                  width: size.width * 0.70,
+                                                  child: Column(
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            user.username,
+                                                            style: const TextStyle(
+                                                                color: white,
+                                                                fontSize: 24,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          Text(
+                                                            itemsTemp[index]
+                                                                ['age'],
+                                                            style:
+                                                                const TextStyle(
                                                               color: white,
-                                                              fontSize: 24,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        Text(
+                                                              fontSize: 22,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          Container(
+                                                            width: 10,
+                                                            height: 10,
+                                                            decoration:
+                                                                const BoxDecoration(
+                                                                    color:
+                                                                        green,
+                                                                    shape: BoxShape
+                                                                        .circle),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 10,
+                                                          ),
+                                                          const Text(
+                                                            "Recently Active",
+                                                            style: TextStyle(
+                                                              color: white,
+                                                              fontSize: 16,
+                                                            ),
+                                                          )
+                                                        ],
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 15,
+                                                      ),
+                                                      Row(
+                                                        children: List.generate(
                                                           itemsTemp[index]
-                                                              ['age'],
-                                                          style:
-                                                              const TextStyle(
-                                                            color: white,
-                                                            fontSize: 22,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 10,
-                                                    ),
-                                                    Row(
-                                                      children: [
-                                                        Container(
-                                                          width: 10,
-                                                          height: 10,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                  color: green,
-                                                                  shape: BoxShape
-                                                                      .circle),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 10,
-                                                        ),
-                                                        const Text(
-                                                          "Recently Active",
-                                                          style: TextStyle(
-                                                            color: white,
-                                                            fontSize: 16,
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    const SizedBox(
-                                                      height: 15,
-                                                    ),
-                                                    Row(
-                                                      children: List.generate(
-                                                        itemsTemp[index]
-                                                                ['likes']
-                                                            .length,
-                                                        (indexLikes) {
-                                                          if (indexLikes == 0) {
+                                                                  ['likes']
+                                                              .length,
+                                                          (indexLikes) {
+                                                            if (indexLikes ==
+                                                                0) {
+                                                              return Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                            .only(
+                                                                        right:
+                                                                            8),
+                                                                child:
+                                                                    Container(
+                                                                  decoration: BoxDecoration(
+                                                                      border: Border.all(
+                                                                          color:
+                                                                              white,
+                                                                          width:
+                                                                              2),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                              30),
+                                                                      color: white
+                                                                          .withOpacity(
+                                                                              0.4)),
+                                                                  child:
+                                                                      Padding(
+                                                                    padding: const EdgeInsets
+                                                                            .only(
+                                                                        top: 3,
+                                                                        bottom:
+                                                                            3,
+                                                                        left:
+                                                                            10,
+                                                                        right:
+                                                                            10),
+                                                                    child: Text(
+                                                                      itemsTemp[index]
+                                                                              [
+                                                                              'likes']
+                                                                          [
+                                                                          indexLikes],
+                                                                      style: const TextStyle(
+                                                                          color:
+                                                                              white),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            }
                                                             return Padding(
                                                               padding:
                                                                   const EdgeInsets
@@ -421,17 +550,12 @@ class _ExplorePageState extends State<ExplorePage>
                                                                       right: 8),
                                                               child: Container(
                                                                 decoration: BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color:
-                                                                            white,
-                                                                        width:
-                                                                            2),
                                                                     borderRadius:
                                                                         BorderRadius.circular(
                                                                             30),
                                                                     color: white
                                                                         .withOpacity(
-                                                                            0.4)),
+                                                                            0.2)),
                                                                 child: Padding(
                                                                   padding: const EdgeInsets
                                                                           .only(
@@ -453,136 +577,98 @@ class _ExplorePageState extends State<ExplorePage>
                                                                 ),
                                                               ),
                                                             );
-                                                          }
-                                                          return Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                        .only(
-                                                                    right: 8),
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              30),
-                                                                  color: white
-                                                                      .withOpacity(
-                                                                          0.2)),
-                                                              child: Padding(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                            .only(
-                                                                        top: 3,
-                                                                        bottom:
-                                                                            3,
-                                                                        left:
-                                                                            10,
-                                                                        right:
-                                                                            10),
-                                                                child: Text(
-                                                                  itemsTemp[index]
-                                                                          [
-                                                                          'likes']
-                                                                      [
-                                                                      indexLikes],
-                                                                  style: const TextStyle(
-                                                                      color:
-                                                                          white),
-                                                                ),
-                                                              ),
+                                                          },
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: SizedBox(
+                                                    width: size.width * 0.2,
+                                                    child: Center(
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          Navigator.of(context)
+                                                              .push(
+                                                            MaterialPageRoute(
+                                                              builder:
+                                                                  (context) {
+                                                                return CardDetails(
+                                                                    profile: index <
+                                                                            users
+                                                                                .length
+                                                                        ? user
+                                                                            .username
+                                                                        : itemsTemp[index]
+                                                                            [
+                                                                            'name'],
+                                                                    pic: index <
+                                                                            users
+                                                                                .length
+                                                                        ? user.images[
+                                                                            0]
+                                                                        : itemsTemp[index]
+                                                                            [
+                                                                            'img']);
+                                                              },
                                                             ),
                                                           );
                                                         },
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              Expanded(
-                                                child: SizedBox(
-                                                  width: size.width * 0.2,
-                                                  child: Center(
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        Navigator.of(context)
-                                                            .push(
-                                                          MaterialPageRoute(
-                                                            builder: (context) {
-                                                              return CardDetails(
-                                                                  profile: index <
-                                                                          users
-                                                                              .length
-                                                                      ? user
-                                                                          .username
-                                                                      : itemsTemp[index]
-                                                                          [
-                                                                          'name'],
-                                                                  pic: index <
-                                                                          users
-                                                                              .length
-                                                                      ? user.images[
-                                                                          0]
-                                                                      : itemsTemp[
-                                                                              index]
-                                                                          [
-                                                                          'img']);
-                                                            },
-                                                          ),
-                                                        );
-                                                      },
-                                                      child: const Icon(
-                                                        Icons.info,
-                                                        color: white,
-                                                        size: 28,
+                                                        child: const Icon(
+                                                          Icons.info,
+                                                          color: white,
+                                                          size: 28,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                ],
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          if (labelVisible)
-                            labelType == 'like'
-                                ? Positioned(
-                                    top: 10,
-                                    left: 10,
-                                    child: Image.asset(
-                                      'assets/like.png',
-                                      height: 100.h,
-                                    ),
-                                  )
-                                : labelType == 'dislike'
-                                    ? Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: Image.asset(
-                                          'assets/dislike.png',
-                                          height: 100.h,
-                                        ),
-                                      )
-                                    : Positioned(
-                                        top: 10,
-                                        left:
-                                            MediaQuery.of(context).size.width *
-                                                0.2,
-                                        child: Image.asset(
-                                          'assets/superlike.png',
-                                          height: 100.h,
-                                        ),
+                            if (labelVisible)
+                              labelType == 'like'
+                                  ? Positioned(
+                                      top: 10,
+                                      left: 10,
+                                      child: Image.asset(
+                                        'assets/like.png',
+                                        height: 100.h,
                                       ),
-                        ],
-                      );
-                    },
+                                    )
+                                  : labelType == 'dislike'
+                                      ? Positioned(
+                                          top: 10,
+                                          right: 10,
+                                          child: Image.asset(
+                                            'assets/dislike.png',
+                                            height: 100.h,
+                                          ),
+                                        )
+                                      : Positioned(
+                                          top: 10,
+                                          left: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.2,
+                                          child: Image.asset(
+                                            'assets/superlike.png',
+                                            height: 100.h,
+                                          ),
+                                        ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
               ],
             ),
           );

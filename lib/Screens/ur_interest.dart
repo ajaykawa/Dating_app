@@ -96,7 +96,7 @@ class _YourInterestState extends State<YourInterest> {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) {
-            return const MyNavigationBar();
+            return  MyNavigationBar();
           },
         ),
       );

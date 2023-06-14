@@ -36,9 +36,15 @@ class _CardDetailsState extends State<CardDetails> {
         body: Center(
           child: Stack(
             children: [
-              widget.pic.startsWith('http')
-                  ? Image.network(widget.pic)
-                  : Image.asset(widget.pic),
+              Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                          image: NetworkImage(
+                            widget.pic,
+                          ),
+                          fit: BoxFit.cover))),
               DraggableScrollableSheet(
                 initialChildSize: 0.5,
                 minChildSize: 0.5,
@@ -76,7 +82,7 @@ class _CardDetailsState extends State<CardDetails> {
                                       children: [
                                         Text(
                                           widget.profile,
-                                          style: TextStyle(
+                                          style:  const TextStyle(
                                               fontSize: 24.0,
                                               fontWeight: FontWeight.bold,
                                               fontStyle: FontStyle.italic),
@@ -105,16 +111,16 @@ class _CardDetailsState extends State<CardDetails> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         RichText(
-                                          text: TextSpan(
+                                          text: const TextSpan(
                                             text: "Location\n",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontWeight: FontWeight.w800,
                                                 fontSize: 16,
                                                 color: Colors.black),
                                             children: [
                                               TextSpan(
-                                                  text:  'Loading...',
-                                                  style: const TextStyle(
+                                                  text: 'Loading...',
+                                                  style: TextStyle(
                                                       color: Colors.grey,
                                                       fontSize: 14,
                                                       fontWeight:
@@ -207,14 +213,15 @@ class _CardDetailsState extends State<CardDetails> {
                                       children: List.generate(
                                         itemLength,
                                         (index) {
-                                          final imageUrl = itemsTemp[index]['img'];
+                                          final imageUrl =
+                                              itemsTemp[index]['img'];
 
                                           return GestureDetector(
                                             onTap: () {},
-                                            child:  Image.asset(
-                                                    itemsTemp[index]['img'],
-                                                    fit: BoxFit.cover,
-                                                  ),
+                                            child: Image.asset(
+                                              itemsTemp[index]['img'],
+                                              fit: BoxFit.cover,
+                                            ),
                                           );
                                         },
                                       ),

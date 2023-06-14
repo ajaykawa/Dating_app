@@ -1,41 +1,33 @@
 {
   "project_info": {
-    "project_number": "169582681483",
-    "project_id": "datingapp-35546",
-    "storage_bucket": "datingapp-35546.appspot.com"
+    "project_number": "754980588602",
+    "project_id": "datingapp-7bb7f",
+    "storage_bucket": "datingapp-7bb7f.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:169582681483:android:8b77da0941ff7ee4d4e38e",
+        "mobilesdk_app_id": "1:754980588602:android:7c87f07853015d2566f903",
         "android_client_info": {
           "package_name": "com.example.tinderapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "169582681483-ufkj86pqdqrp9enpukar8gkeekoa4dqr.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.tinderapp",
-            "certificate_hash": "5433c7fd623dd63738e317501d7a6ab873548cc9"
-          }
-        },
-        {
-          "client_id": "169582681483-radkgtldlnloakt41akufttj03jl7kli.apps.googleusercontent.com",
+          "client_id": "754980588602-eaq1cl73n9qk5asd21qi3b9uajck8glr.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBpSuqWgN7LhDxiSNu3BWEwtV22S3unbvU"
+          "current_key": "AIzaSyCevuZ_efOFj7NuUK5SQD4omrJGIsvAi_E"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "169582681483-fk2ivou5a4nn36n0rkh0s6i2i65vs0i1.apps.googleusercontent.com",
+              "client_id": "754980588602-eaq1cl73n9qk5asd21qi3b9uajck8glr.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

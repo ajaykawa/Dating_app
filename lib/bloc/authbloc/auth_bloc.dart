@@ -125,7 +125,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .doc(currentUser.uid)
             .get();
         if (userDoc.exists == currentUser.uid) {
-          Get.offAll(const MyNavigationBar()); // navigate to the main screen
+          Get.offAll( MyNavigationBar()); // navigate to the main screen
         } else {
           Get.to(const UserDetails()); // navigate to the user details screen
         }

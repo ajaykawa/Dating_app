@@ -6,7 +6,6 @@ import 'components/home_components/components/story_screen_ui.dart';
 import 'constants.dart';
 
 class WhatsappHome extends StatefulWidget {
-  const WhatsappHome({super.key});
 
   @override
   _WhatsappHomeState createState() => _WhatsappHomeState();

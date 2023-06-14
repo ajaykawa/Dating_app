@@ -3,7 +3,6 @@ import 'package:story_view/story_view.dart';
 import 'package:swipedetector/swipedetector.dart';
 
 class StoryPageView extends StatefulWidget {
-  const StoryPageView({super.key});
 
   @override
   _StoryPageViewState createState() => _StoryPageViewState();

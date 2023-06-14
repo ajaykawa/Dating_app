@@ -296,7 +296,7 @@ class _StoryScreenUIState extends State<StoryScreenUI>
 class MoreStories extends StatefulWidget {
   final List img;
 
-  const MoreStories({super.key, required this.img});
+  const MoreStories({required this.img});
   @override
   _MoreStoriesState createState() => _MoreStoriesState();
 }

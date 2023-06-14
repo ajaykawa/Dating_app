@@ -89,8 +89,8 @@ class _TopPicksState extends State<TopPicks> {
                                 color: Colors.white),
                           ),
                           Text(
-                            textAlign: TextAlign.center,
                             "You don't have enough likes to play.\n Boost your profile for better \n visibility!",
+                            textAlign: TextAlign.center,
                             style:
                                 TextStyle(color: Colors.white, fontSize: 12.sp),
                           ),
@@ -345,7 +345,6 @@ class SlidingContainers extends StatelessWidget {
   // final String image;
   final String text;
   const SlidingContainers({
-    super.key,
     // required this.image,
     required this.text,
   });
@@ -385,7 +384,6 @@ class LikesContainer extends StatelessWidget {
   final Widget icons;
   final String text;
   const LikesContainer({
-    super.key,
     required this.decorateColor,
     // required this.bgimage,
     required this.text,

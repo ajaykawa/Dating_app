@@ -158,7 +158,7 @@ TextEditingController EduController = TextEditingController();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) {
-                                        return const MyNavigationBar();
+                                        return  MyNavigationBar();
                                       },
                                     ),
                                   );
@@ -535,7 +535,6 @@ TextEditingController EduController = TextEditingController();
                                       borderRadius: BorderRadius.circular(35.0),
                                     ),
                                     enableDrag: true,
-                                    useSafeArea: true,
                                     context: context,
                                     builder: (context) {
                                       return Padding(
@@ -713,7 +712,6 @@ TextEditingController EduController = TextEditingController();
                                       borderRadius: BorderRadius.circular(35.0),
                                     ),
                                     enableDrag: true,
-                                    useSafeArea: true,
                                     context: context,
                                     builder: (context) {
                                       return StatefulBuilder(
@@ -871,7 +869,6 @@ TextEditingController EduController = TextEditingController();
                                       borderRadius: BorderRadius.circular(35.0),
                                     ),
                                     enableDrag: true,
-                                    useSafeArea: true,
                                     context: context,
                                     builder: (context) {
                                       return StatefulBuilder(
@@ -1065,7 +1062,6 @@ TextEditingController EduController = TextEditingController();
                                                     BorderRadius.circular(35.0),
                                               ),
                                               enableDrag: true,
-                                              useSafeArea: true,
                                               context: context,
                                               builder: (context) {
                                                 return StatefulBuilder(
@@ -1192,7 +1188,6 @@ TextEditingController EduController = TextEditingController();
                                                   BorderRadius.circular(35.0),
                                             ),
                                             enableDrag: true,
-                                            useSafeArea: true,
                                             context: context,
                                             builder: (context) {
                                               return StatefulBuilder(
@@ -1324,7 +1319,6 @@ TextEditingController EduController = TextEditingController();
                                                   BorderRadius.circular(20.0),
                                             ),
                                             enableDrag: true,
-                                            useSafeArea: true,
                                             context: context,
                                             builder: (context) {
                                               return StatefulBuilder(
@@ -1453,7 +1447,6 @@ TextEditingController EduController = TextEditingController();
                                             ),
                                             enableDrag: true,
                                             isScrollControlled: true,
-                                            useSafeArea: true,
                                             context: context,
                                             builder: (context) {
                                               return StatefulBuilder(

@@ -6,7 +6,6 @@ class MessageBox extends StatelessWidget {
   final bool? isMe;
   final String? message;
   const MessageBox({
-    super.key,
     this.isMe,
     this.message,
   });

@@ -6,21 +6,18 @@ import '../chatting/whatsapp_home.dart';
 import 'card_swipe.dart';
 
 class MyNavigationBar extends StatefulWidget {
-  const MyNavigationBar({
-    super.key,
-  });
 
   @override
   _MyNavigationBarState createState() => _MyNavigationBarState();
 }
 
 class _MyNavigationBarState extends State<MyNavigationBar> {
-  int _selectedIndex = 3;
+  int _selectedIndex = 2;
   static final List<Widget> _widgetOptions = [
     ExplorePage(),
-    const LikesPage(),
-    const WhatsappHome(),
-    const ProfileScreen(),
+     LikesPage(),
+     WhatsappHome(),
+     ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
