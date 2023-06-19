@@ -72,6 +72,7 @@ dependencies:
   flutter_chat_bubble: ^2.0.2
   firebase_messaging: ^14.6.2
   flutter_local_notifications: ^14.1.1
+  async:
 
 
 

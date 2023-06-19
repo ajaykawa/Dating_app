@@ -1,13 +1,12 @@
-import 'dart:convert';
 import 'dart:ui' as ui;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:wave/config.dart';
 import 'package:wave/wave.dart';
+
+import 'package:firebase_database/firebase_database.dart';
 
 class ConversationScreenUI extends StatefulWidget {
   final String name;
@@ -24,30 +23,71 @@ class ConversationScreenUI extends StatefulWidget {
   _ConversationScreenUIState createState() => _ConversationScreenUIState();
 }
 
-
-
 class _ConversationScreenUIState extends State<ConversationScreenUI> {
+  final DatabaseReference _messagesRef =
+      FirebaseDatabase.instance.reference().child('Messages');
+
   final TextEditingController messageController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    listenForMessages();
+  }
+
+  void listenForMessages() {
+    _messagesRef.child(widget.email).onChildAdded.listen((event) {
+      // Handle received message
+      final messageData = event.snapshot.value as Map<dynamic, dynamic>;
+      final messageText = messageData['message'] as String;
+      final messageSender = messageData['email'] as String;
+      final messageTime =
+          DateTime.fromMillisecondsSinceEpoch(messageData['time'] as int);
+
+      // Create a MessageBubble for the received message
+      final receivedMessage = MessageBubble(
+        messageText: messageText,
+        messageSender: messageSender,
+        messageTime: messageTime,
+        isMe: false,
+        picture: widget.profilePic,
+      );
+
+      // Update the UI with the received message
+      setState(() {
+        messages.insert(0, receivedMessage);
+      });
+    });
   }
 
   void sendMessage(String messageText) {
     if (messageText.isNotEmpty) {
-      FirebaseFirestore.instance.collection('Messages').add({
+      _messagesRef.child(widget.email).push().set({
         'message': messageText,
-        'time': DateTime.now(),
+        'time': DateTime.now().millisecondsSinceEpoch,
         'email': widget.email,
-      }).then((docRef) {
+      }).then((_) {
         // Send notification to the other person using a server or cloud function
       });
-
       messageController.clear();
+
+      // Create a MessageBubble for the sent message
+      final sentMessage = MessageBubble(
+        messageText: messageText,
+        messageSender: widget.email,
+        messageTime: DateTime.now(),
+        isMe: true,
+        picture: widget.profilePic,
+      );
+
+      // Update the UI with the sent message
+      setState(() {
+        messages.insert(0, sentMessage);
+      });
     }
   }
 
+  List<MessageBubble> messages = [];
 
   @override
   Widget build(BuildContext context) {
@@ -65,9 +105,16 @@ class _ConversationScreenUIState extends State<ConversationScreenUI> {
       body: SafeArea(
         child: Column(
           children: [
-            Messages(
-              email: widget.email,
-              profilePic: widget.profilePic,
+            Expanded(
+              child: ListView.builder(
+                reverse: true,
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20.0, horizontal: 10.0),
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  return messages[index];
+                },
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -114,86 +161,21 @@ class _ConversationScreenUIState extends State<ConversationScreenUI> {
   }
 }
 
-
-
-
-
-class Messages extends StatelessWidget {
-  final String email;
-  final String profilePic;
-
-  const Messages({
-    required this.email,
-    required this.profilePic,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Stream<QuerySnapshot> messageStream = FirebaseFirestore.instance
-        .collection('Messages')
-        .orderBy('time')
-        .snapshots();
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: messageStream,
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return const Text("Something went wrong");
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        final messages = snapshot.data!.docs.reversed;
-        List<MessageBubble> messageBubbles = [];
-
-        for (var message in messages) {
-          final messageText = message['message'];
-          final messageSender = message['email'];
-          final messageTime = message['time'] as Timestamp;
-          final currentUser = email;
-
-          final messageBubble = MessageBubble(
-            messageText: messageText,
-            messageSender: messageSender,
-            messageTime: messageTime,
-            isMe: currentUser == messageSender,
-            picture: profilePic,
-          );
-
-          messageBubbles.add(messageBubble);
-        }
-
-        return Expanded(
-          child: ListView(
-            reverse: true,
-            padding:
-                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
-            children: messageBubbles,
-          ),
-        );
-      },
-    );
-  }
-}
-
 class MessageBubble extends StatelessWidget {
   final String messageText;
   final String messageSender;
-  final Timestamp messageTime;
+  final DateTime messageTime;
   final bool isMe;
   final String picture;
 
   const MessageBubble({
+    Key? key,
     required this.messageText,
     required this.messageSender,
     required this.messageTime,
     required this.isMe,
     required this.picture,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -203,79 +185,52 @@ class MessageBubble extends StatelessWidget {
         crossAxisAlignment:
             isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Text(
-            messageSender,
-            style: const TextStyle(fontSize: 12.0, color: Colors.black54),
-          ),
           const SizedBox(height: 5),
-          isMe
-              ? Material(
-                  shadowColor: Colors.transparent,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
-                    bottomLeft: Radius.circular(30.0),
-                    bottomRight: Radius.circular(30.0),
+          Row(
+            mainAxisAlignment:
+                isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+            children: [
+              if (!isMe)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CircleAvatar(
+                    backgroundImage: NetworkImage(picture),
+                    radius: 15,
                   ),
-                  elevation: 5.0,
-                  color: isMe ? Colors.purple[100] : Colors.grey[300],
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 20.0,
-                    ),
-                    child: Text(
-                      messageText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                )
-              : Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: CircleAvatar(
-                        backgroundImage: NetworkImage(picture),
-                        radius: 15,
-                      ),
-                    ),
-                    Material(
-                      shadowColor: Colors.transparent,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30.0),
-                        topRight: Radius.circular(30.0),
-                        bottomLeft: Radius.circular(30.0),
-                        bottomRight: Radius.circular(30.0),
-                      ),
-                      elevation: 5.0,
-                      color: Colors.grey[300],
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10.0,
-                          horizontal: 20.0,
-                        ),
-                        child: Text(
-                          messageText,
-                          style: const TextStyle(
-                            overflow: TextOverflow.ellipsis,
-                            color: Colors.black,
-                            fontSize: 15.0,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
+              Material(
+                shadowColor: Colors.transparent,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(30.0),
+                  topRight: Radius.circular(30.0),
+                  bottomLeft: Radius.circular(30.0),
+                  bottomRight: Radius.circular(30.0),
+                ),
+                elevation: 5.0,
+                color: isMe ? Colors.purple[100] : Colors.grey[300],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10.0,
+                    horizontal: 20.0,
+                  ),
+                  child: Text(
+                    messageText,
+                    style: TextStyle(
+                      color: isMe ? Colors.white : Colors.black,
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
+
 //===================================================================================================================================================================================================================
 
 class FakeChat extends StatefulWidget {

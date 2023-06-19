@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../constants.dart';
 import '../../model/chatModel.dart';
 import '../chat_components/conversation_screen_ui.dart';
@@ -16,7 +17,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
   final firebaseAuth = FirebaseAuth.instance;
   late final String currentUserId;
   late List<User> users;
-  int currentIndex = 0;
+  RxInt currentIndex = 0.obs;
   int? tappedIndex;
   Timer? _timer;
   @override
@@ -69,7 +70,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                 color: Colors.white,
               ),
               child: ListView.builder(
-                itemCount: currentIndex,
+                itemCount: currentIndex.value,
                 scrollDirection: Axis.vertical,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (context, i) {
@@ -205,13 +206,13 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                                 MaterialPageRoute(
                                   builder: (context) => ConversationScreenUI(
                                     email:
-                                    userId,
+                                    usersss[i],
                                     name: name,
                                     profilePic: imageUrl[i],
                                   ),
                                 ),
                               );
-                            },
+                              print('?????????????$userId');  },
                             leading: CircleAvatar(
                               backgroundImage: NetworkImage(
                                 imageUrl.isNotEmpty

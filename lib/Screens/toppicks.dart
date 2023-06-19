@@ -1,7 +1,12 @@
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:lottie/lottie.dart';
+import 'package:tinderapp/Screens/profile_card.dart';
+
+import 'package:flutter/material.dart';
 
 class TopPicks extends StatefulWidget {
   const TopPicks({Key? key}) : super(key: key);
@@ -11,6 +16,8 @@ class TopPicks extends StatefulWidget {
 }
 
 class _TopPicksState extends State<TopPicks> {
+  List<Map<String, dynamic>> matchingUsers = [];
+
   @override
   Widget build(BuildContext context) {
     Future<bool> showExitPopup() async {
@@ -18,20 +25,18 @@ class _TopPicksState extends State<TopPicks> {
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Exit App'),
-              content: const Text('Do you want to exit an App?'),
+              content: const Text('Do you want to exit the App?'),
               actions: [
                 ElevatedButton(
-                  style: const ButtonStyle(
-                      backgroundColor: MaterialStatePropertyAll(Colors.purple)),
+                  style: ElevatedButton.styleFrom(primary: Colors.purple),
                   onPressed: () => Navigator.of(context).pop(false),
-                  //return false when click on "NO"
+                  // Return false when "NO" is clicked.
                   child: const Text('No'),
                 ),
                 ElevatedButton(
-                  style: const ButtonStyle(
-                      backgroundColor: MaterialStatePropertyAll(Colors.purple)),
+                  style: ElevatedButton.styleFrom(primary: Colors.purple),
                   onPressed: () => SystemNavigator.pop(),
-                  //return true when click on "Yes"
+                  // Return true when "YES" is clicked.
                   child: const Text('Yes'),
                 ),
               ],
@@ -43,294 +48,370 @@ class _TopPicksState extends State<TopPicks> {
     return WillPopScope(
       onWillPop: showExitPopup,
       child: Scaffold(
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser?.uid)
+              .collection('interests')
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset('assets/lottie/notfound.json',
+                        height: MediaQuery.of(context).size.height * 0.2),
+                    const Text(
+                      'Loading......',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Times New Roman',
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            var currentUserInterests = <String>[];
+            for (var doc in snapshot.data!.docs) {
+              currentUserInterests.add(doc.id);
+            }
+
+            return StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('users').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset('assets/lottie/notfound.json',
+                            height: MediaQuery.of(context).size.height * 0.2),
+                        const Text(
+                          'Loading......',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Times New Roman',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                matchingUsers.clear(); // Clear the previous matching users
+
+                snapshot.data!.docs.forEach((userDoc) {
+                  var userData = userDoc.data() as Map<String, dynamic>;
+                  var userInterests = userData['Interests'] as List<dynamic>;
+
+                  // Check if the user's interests intersect with yours
+                  var commonInterests = userInterests
+                      .toSet()
+                      .intersection(userInterests.toSet())
+                      .toList();
+                  if (commonInterests.isNotEmpty) {
+                    // Modify the condition as per your requirement (2 or 3 common interests)
+                    matchingUsers.add(userData);
+                  }
+                });
+
+                if (matchingUsers.isEmpty) {
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset('assets/lottie/notfound.json',
+                            height: MediaQuery.of(context).size.height * 0.2),
+                        const Text(
+                          'No matching interests',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Times New Roman',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    var userData = matchingUsers[index];
+                    var imageUrl = userData['images'] as List<dynamic>;
+                    var name = userData['username'] as String;
+
+                    return Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) {
+                              return const Gold();
+                              //   CardDetails(
+                              //   profile: name,
+                              //   pic: imageUrl[0] ?? '',
+                              // );
+                            }),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            Container(
+                              width:
+                                  MediaQuery.of(context).size.width * 0.5,
+                              height: MediaQuery.of(context).size.height*0.6,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                image: DecorationImage(
+                                  image: NetworkImage(imageUrl[0] ?? ''),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    bottom: 8,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        width: 5,
+                                      ),
+                                      Text(
+                                        name ?? '',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class Gold extends StatefulWidget {
+  const Gold({Key? key}) : super(key: key);
+
+  @override
+  State<Gold> createState() => _GoldState();
+}
+
+class _GoldState extends State<Gold> {
+  int selectedPlanIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
         body: Container(
-          margin: const EdgeInsets.all(15),
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
-          color: Colors.white54,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Play",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 20.h),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  height: 100.h,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: const BoxDecoration(
-                      color: Colors.black,
-                      // image: DecorationImage(
-                      //     image: AssetImage("assets/images/likesbg.jpg"),
-                      //     fit: BoxFit.cover,
-                      //     opacity: 0.3),
-                      borderRadius: BorderRadius.all(Radius.circular(15))),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      const Icon(
-                        Icons.lock_clock,
-                        color: Colors.white,
-                        size: 40,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Crush Time",
-                            style: TextStyle(
-                                fontSize: 24.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            "You don't have enough likes to play.\n Boost your profile for better \n visibility!",
-                            textAlign: TextAlign.center,
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.sp),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  "Explore",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 20.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: const [
-                    LikesContainer(
-                      decorateColor: Colors.purpleAccent,
-                      // bgimage: 'assets/images/like1.jpg',
-                      text: 'Explore the \n Map',
-                      icons: Icon(Icons.travel_explore, size: 30),
-                    ),
-                    LikesContainer(
-                      decorateColor: Colors.green,
-                      // bgimage: 'assets/images/like2.jpg',
-                      text: 'Recent \n Crossings',
-                      icons: Icon(Icons.timer, size: 30),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: const [
-                    LikesContainer(
-                      decorateColor: Colors.lightBlueAccent,
-                      // bgimage: 'assets/images/like3.jpg',
-                      text: '1st \n Crossings',
-                      icons: Icon(Icons.remove_red_eye_sharp, size: 30),
-                    ),
-                    LikesContainer(
-                      decorateColor: Colors.blueGrey,
-                      // bgimage: 'assets/images/like4.jpg',
-                      text: 'Repeat \n Crossings',
-                      icons: Icon(Icons.bolt, size: 30),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  "Meet",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "A happener for",
-                  style:
-                      TextStyle(fontWeight: FontWeight.w600, fontSize: 20.sp),
-                ),
-                SizedBox(height: 20.h),
-                SizedBox(
-                  height: 200.h,
-                  width: MediaQuery.of(context).size.width.w,
-                  child: ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      CarouselSlider(
-                        items: const [
-                          SlidingContainers(
-                            // image: 'assets/images/normal.jpg',
-                            text: " You'll know when \n you find it",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/serious.jpg',
-                            text:
-                                " If you are looking for \n something serious",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/benefits.jpg',
-                            text: " If you prefer no strings \n attached",
-                          ),
-                        ],
-                        //Slider Container properties
-                        options: CarouselOptions(
-                          height: 180.0.h,
-                          enlargeCenterPage: true,
-                          autoPlay: true,
-                          aspectRatio: 16 / 9,
-                          // autoPlayCurve: Curves.fastOutSlowIn,
-                          enableInfiniteScroll: true,
-                          autoPlayAnimationDuration:
-                              const Duration(milliseconds: 800),
-                          viewportFraction: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  "A Traveller",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 10.h),
-                SizedBox(
-                  height: 200.h,
-                  width: MediaQuery.of(context).size.width.w,
-                  child: ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      CarouselSlider(
-                        items: const [
-                          SlidingContainers(
-                            // image: 'assets/images/hikingcouple.jpg',
-                            text: "Hiking & backpack",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/museumcouple.jpg',
-                            text: " Museum & postcards",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/beachcouple.jpg',
-                            text: "Deckchair & sunscreen",
-                          ),
-                        ],
-                        //Slider Container properties
-                        options: CarouselOptions(
-                          height: 180.0.h,
-                          enlargeCenterPage: true,
-                          autoPlay: true,
-                          aspectRatio: 16 / 9,
-                          // autoPlayCurve: Curves.fastOutSlowIn,
-                          enableInfiniteScroll: true,
-                          autoPlayAnimationDuration:
-                              const Duration(milliseconds: 800),
-                          viewportFraction: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  "A chef(or almost...)",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 10.h),
-                SizedBox(
-                  height: 200.h,
-                  width: MediaQuery.of(context).size.width.w,
-                  child: ListView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      CarouselSlider(
-                        items: const [
-                          SlidingContainers(
-                            // image: 'assets/images/chef1.jpg',
-                            text: "I know a few good \n recipes",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/chef2.jpg',
-                            text: "Gourmet - For a three course \n meal",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/chef3.jpg',
-                            text: "I'm an excellent chef",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/chef1.jpg',
-                            text: "For a meal without \n leaving a couch",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/chef2.jpg',
-                            text: " Purely Vegan, Only in plant base meals",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/chef3.jpg',
-                            text: "Flexiterian - Meal with or\n without meat.",
-                          ),
-                        ],
-                        //Slider Container properties
-                        options: CarouselOptions(
-                          height: 180.0.h,
-                          enlargeCenterPage: true,
-                          autoPlay: true,
-                          aspectRatio: 1 / 1,
-                          // autoPlayCurve: Curves.fastOutSlowIn,
-                          enableInfiniteScroll: true,
-                          autoPlayAnimationDuration:
-                              const Duration(milliseconds: 800),
-                          viewportFraction: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  "A Partner",
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 30.sp),
-                ),
-                SizedBox(height: 10.h),
-                SizedBox(
-                  height: 200.h,
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView(
-                    children: [
-                      CarouselSlider(
-                        items: const [
-                          SlidingContainers(
-                            // image: 'assets/images/coupleparty.jpg',
-                            text: "To party with \n some nightmare adventures",
-                          ),
-                          SlidingContainers(
-                            // image: 'assets/images/couplegym.jpg',
-                            text: "To exercise with some intense sessions",
-                          ),
-                        ],
-                        //Slider Container properties
-                        options: CarouselOptions(
-                          height: 180.0.h,
-                          enlargeCenterPage: true,
-                          autoPlay: true,
-                          aspectRatio: 16 / 9,
-                          // autoPlayCurve: Curves.fastOutSlowIn,
-                          autoPlayAnimationDuration:
-                              const Duration(milliseconds: 800),
-                          viewportFraction: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 50.h,
-                )
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              stops: const [0.2, 0.3, 0.4, 0.9],
+              colors: [
+                Colors.yellow[200]!,
+                Colors.yellow[100]!,
+                Colors.yellow[100]!,
+                Colors.yellow[300]!,
               ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      InkWell(
+                          onTap: () {
+                            return Navigator.pop(context);
+                          },
+                          child: const Icon(
+                            Icons.close,
+                          )),
+                      const SizedBox(width: 100),
+                      SvgPicture.asset(
+                        "assets/explore_active_icon.svg",
+                        color: Colors.orange,
+                      ),
+                      const Text(
+                        "  tinder ",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 28),
+                      ),
+                      Image.asset(
+                        'assets/icons/gold-medal.png',
+                        height: 24,
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Swipe on the best profiles every day",
+                    style: TextStyle(
+                        fontFamily: 'sans-serif-condensed',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Select a plan",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'sans-serif-condensed',
+                        fontSize: 18),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.2,
+                    width: MediaQuery.of(context).size.width,
+                    child: ListView.builder(
+                      itemCount: 3,
+                      physics: const BouncingScrollPhysics(),
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        bool isSelected = index == selectedPlanIndex;
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectedPlanIndex = index;
+                            });
+                          },
+                          child: Container(
+                            width: MediaQuery.of(context).size.width * 0.5,
+                            height: 200,
+                            margin: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                                border:
+                                    Border.all(color: Colors.black, width: 3),
+                                borderRadius: const BorderRadius.all(
+                                    Radius.circular(30))),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "${mnt[index]} month",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'sans-serif',
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  "₹ ${rs[index]}/month",
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.orange
+                                        : Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.35,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black, width: 2),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(20))),
+                    child: ListView.builder(
+                      physics: const  NeverScrollableScrollPhysics(),
+                      itemCount: 6,
+                      itemBuilder: (context, index) {
+                        return Row(
+                          children: [
+                            const Icon(Icons.done, size: 45),
+                            Text(
+                              offr[index],
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  fontFamily: 'Times New Roman'),
+                            )
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    height: 50,
+                    margin: const EdgeInsets.all(20),
+                    width: MediaQuery.of(context).size.width,
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(50),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Continue - ₹ ${rs[selectedPlanIndex]}", // Display selected amount
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
             ),
           ),
         ),
@@ -339,91 +420,13 @@ class _TopPicksState extends State<TopPicks> {
   }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------
-
-class SlidingContainers extends StatelessWidget {
-  // final String image;
-  final String text;
-  const SlidingContainers({
-    // required this.image,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(6.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.0),
-        // image: DecorationImage(
-        //   image: AssetImage(image),
-        //   fit: BoxFit.cover,
-        // ),
-      ),
-      child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.0),
-            color: Colors.black.withOpacity(0.5),
-          ),
-          height: 50.h,
-          width: MediaQuery.of(context).size.width,
-          child: Center(
-              child: Text(
-            text,
-            style: const TextStyle(color: Colors.white),
-          ))),
-    );
-  }
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------
-
-class LikesContainer extends StatelessWidget {
-  final Color decorateColor;
-  // final String bgimage;
-  final Widget icons;
-  final String text;
-  const LikesContainer({
-    required this.decorateColor,
-    // required this.bgimage,
-    required this.text,
-    required this.icons,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.2.h,
-      width: MediaQuery.of(context).size.width * 0.4.w,
-      decoration: BoxDecoration(
-          color: decorateColor,
-          // image: DecorationImage(
-          //     image: AssetImage(bgimage), fit: BoxFit.cover, opacity: 0.2),
-          borderRadius: const BorderRadius.all(Radius.circular(15))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Container(
-              height: 50.h,
-              width: 50.w,
-              decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(15))),
-              child: icons,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(text,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18.sp)),
-          ),
-        ],
-      ),
-    );
-  }
-}
+List<String> mnt = ['1', '6', '12'];
+List<String> rs = ['589.00', '366.50', '274.92'];
+List<String> offr = [
+  "Unlimited likes",
+  "See Who Likes you",
+  "Unlimited Rewards",
+  "1 Free Boosts per month",
+  "5 Free Super likes per week",
+  "Hide ads"
+];

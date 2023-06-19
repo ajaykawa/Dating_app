@@ -1,13 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_insta/flutter_insta.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tinderapp/Screens/login_options.dart';
 
@@ -376,14 +374,14 @@ class _SettingScreenState extends State<SettingScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 Text(
-                                  'Age Preference',
+                                  'Age Prefer',
                                   style: TextStyle(
                                       color: Colors.grey, fontSize: 18.sp),
                                 ),
                                 Text(
                                   '${_currentRangeValues}',
                                   style: TextStyle(
-                                      fontSize: 18.0.sp, color: Colors.grey),
+                                      fontSize: 12.0.sp, color: Colors.grey),
                                 ),
                               ],
                             ),
@@ -393,7 +391,7 @@ class _SettingScreenState extends State<SettingScreen> {
                               activeColor: Colors.red,
                               min: 0,
                               max: 100,
-                              divisions: 50,
+                              divisions: 20,
                               labels: RangeLabels(
                                 _currentRangeValues.start.round().toString(),
                                 _currentRangeValues.end.round().toString(),

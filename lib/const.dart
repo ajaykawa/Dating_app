@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 const Color white = Colors.white;
 const Color grey = Colors.grey;
@@ -41,9 +41,9 @@ class _ProfileTextFieldsState extends State<ProfileTextFields> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(widget.title, style: const TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
+         SizedBox(height: 5.h),
         Container(
-          height: widget.height,
+          height: widget.height?.h,
           decoration: BoxDecoration(
               color: Colors.purple[50],
               borderRadius: const BorderRadius.all(Radius.circular(15)),

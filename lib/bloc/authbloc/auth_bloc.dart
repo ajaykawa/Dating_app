@@ -37,23 +37,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
   void _signUpUsingPhone(
-    SignUpUsingMobileNumber event,
-    Emitter<AuthState> emit,
-  ) async {
+      SignUpUsingMobileNumber event,
+      Emitter<AuthState> emit,
+      ) async {
     emit(AuthLoading());
 
     try {
-      verificationCompleted(AuthCredential credential) async {
+      final PhoneVerificationCompleted verificationCompleted =
+          (AuthCredential credential) async {
         emit(AuthLoaded());
         await FirebaseAuth.instance.signInWithCredential(credential);
-      }
+        // Navigate to the main screen
+        // Example: Get.offAll(MainScreen());
+      };
 
       verificationFailed(FirebaseAuthException e) {
-        if (kDebugMode) {
-          print(
-            'Error verifying phone number: ${event.countyCode}${event.phoneNumber}, error: ${e.message}',
-          );
-        }
+        debugPrint('Error verifying phone number: ${event.countyCode}${event.phoneNumber}, error: ${e.message}');
         Get.snackbar(
           'Error',
           'Failed to verify phone number',
@@ -63,14 +62,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       codeSent(String verificationId, int? resendToken) async {
-        await Get.to(() => OtpScreen(
-              verificationId: verificationId,
-              resendToken: resendToken,
-              phoneNumber: event.phoneNumber,
-              countryCode: event.countyCode,
-            ));
+          await Get.to(() => OtpScreen(
+            verificationId: verificationId,
+            resendToken: resendToken,
+            phoneNumber: event.phoneNumber,
+            countryCode: event.countyCode,
+          ));
         emit(codeSent(verificationId, resendToken));
-      }
+      };
 
       codeAutoRetrievalTimeout(String verificationId) {
         if (kDebugMode) {
@@ -88,11 +87,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
       );
     } catch (e) {
-      if (kDebugMode) {
-        print(
-          'Error verifying phone number: ${event.countyCode}, error: $e',
-        );
-      }
+      debugPrint('Error verifying phone number: ${event.countyCode}, error: $e');
       Get.snackbar(
         'Error',
         'Failed to verify phone number',
@@ -110,8 +105,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      print(
-          "???????????????????????????${event.verificationId},,,,,,,,,,,,,,,,${event.otpsent}");
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: event.verificationId,
         smsCode: event.otpsent,
@@ -125,7 +118,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .doc(currentUser.uid)
             .get();
         if (userDoc.exists == currentUser.uid) {
-          Get.offAll( MyNavigationBar()); // navigate to the main screen
+          Get.offAll(MyNavigationBar()); // navigate to the main screen
         } else {
           Get.to(const UserDetails()); // navigate to the user details screen
         }
@@ -135,7 +128,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     } on FirebaseAuthException catch (e) {
       errorSnackbar("Please Input Valid Otp");
-      print("Error verifying OTP: ${e.message}");
       emit(AuthError());
     }
   }
@@ -147,9 +139,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     if (event.user.isNotEmpty) {
-      // Save data to Firebase
       final firebaseAuth = FirebaseAuth.instance;
-      final firebaseUser = await firebaseAuth.currentUser;
+      final firebaseUser = firebaseAuth.currentUser;
       final userId = firebaseUser!.uid;
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(userId);
@@ -161,14 +152,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userId', userId);
-      // Navigate to next screen
       Get.to(() => const MaleFemale());
     } else {
-      // Show snack bar indicating which field is empty
       if (event.user.isEmpty) {
         Get.snackbar("Username", "Please Enter Your Username");
-      } else {
-        Get.snackbar("Password", "Please Enter Your Email");
       }
       emit(AuthError());
     }
@@ -180,7 +167,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final CollectionReference users =
         FirebaseFirestore.instance.collection('users');
     final firebaseAuth = FirebaseAuth.instance;
-    final firebaseUser = await firebaseAuth.currentUser;
+    final firebaseUser =  firebaseAuth.currentUser;
     final userId = firebaseUser!.uid;
     final DocumentReference user = users.doc(userId);
 
@@ -198,7 +185,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final CollectionReference users =
           FirebaseFirestore.instance.collection('users');
       final firebaseAuth = FirebaseAuth.instance;
-      final firebaseUser = await firebaseAuth.currentUser;
+      final firebaseUser =  firebaseAuth.currentUser;
       final userId = firebaseUser!.uid;
       final DocumentReference user = users.doc(userId);
       await user.set(<String, dynamic>{
@@ -215,7 +202,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final CollectionReference users =
         FirebaseFirestore.instance.collection('users');
     final firebaseAuth = FirebaseAuth.instance;
-    final firebaseUser = await firebaseAuth.currentUser;
+    final firebaseUser =  firebaseAuth.currentUser;
     final userId = firebaseUser!.uid;
     final DocumentReference user = users.doc(userId);
     await user.set(

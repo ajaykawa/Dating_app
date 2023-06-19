@@ -8,13 +8,15 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:tinderapp/Screens/profile_edit.dart';
 import 'package:tinderapp/Screens/setting_screen.dart';
 import 'package:tinderapp/data/lists_.dart';
-
 import '../const.dart';
 import '../data/explore_json.dart';
+
 
 double total = 0;
 
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -27,7 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     setState(() {
-      print("total }}}}}}}}}}}}}}}}}}}}}}}   $total");
       itemsTemp = explore_json;
       itemLength = explore_json.length;
     });
@@ -106,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Container(
                         width: size.width.w,
-                        height: size.height * 0.4.h,
+                        height: size.height * 0.5.h,
                         decoration:
                             const BoxDecoration(color: white, boxShadow: []),
                         child: Padding(
@@ -158,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           NetworkImage(firstImage!),
                                     ),
                                     footer: Padding(
-                                      padding: const EdgeInsets.all(14.0),
+                                      padding: const EdgeInsets.all(5.0),
                                       child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
@@ -210,8 +211,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                   ),
                                   Positioned(
-                                    top: 140,
-                                    left: 85,
+                                    top: 120.h,
+                                    left: 80.w,
                                     child: Container(
                                       height: 40.h,
                                       width: 160.w,

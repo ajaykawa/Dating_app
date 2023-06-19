@@ -2,10 +2,12 @@ import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:tinderapp/Screens/toppicks.dart';
 import 'Screens/SplashScreen.dart';
 import 'bloc/authbloc/auth_bloc.dart';
 
@@ -21,7 +23,8 @@ Future<void> main() async {
       Permission.notification.request();
     }
   });
-
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp,]);
   cameras = await availableCameras();
   runApp(MultiBlocProvider(providers: [
     BlocProvider<AuthBloc>(create: (context) => AuthBloc()),

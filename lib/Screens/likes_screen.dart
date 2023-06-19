@@ -10,7 +10,6 @@ import '../const.dart';
 import '../data/likes_json.dart';
 
 class LikesPage extends StatefulWidget {
-
   @override
   _LikesPageState createState() => _LikesPageState();
 }
@@ -77,9 +76,9 @@ class _LikesPageState extends State<LikesPage> {
                       duration: const Duration(milliseconds: 400),
                       curve: Curves.linearToEaseOut);
                 },
-                child: Text(
-                  "${likes_json.length} Likes",
-                  style: const TextStyle(
+                child: const Text(
+                  "Likes",
+                  style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -108,6 +107,7 @@ class _LikesPageState extends State<LikesPage> {
     var size = MediaQuery.of(context).size;
 
     return ListView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 90),
       children: [
         Padding(
@@ -119,19 +119,48 @@ class _LikesPageState extends State<LikesPage> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const CircularProgressIndicator();
+                return Container(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset('assets/lottie/notfound.json',
+                            height: MediaQuery.of(context).size.height * 0.2),
+                        const Text(
+                          'Loading......',
+                          style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Times New Roman'),
+                        )
+                      ],
+                    ));
               }
 
               var userData = snapshot.data!.data() as Map<String, dynamic>;
-              var yourUserLikes = userData.containsKey('other Likes') ? userData['other Likes'] : '';
+              var yourUserLikes = userData.containsKey('other Likes')
+                  ? userData['other Likes']
+                  : '';
 
               if (yourUserLikes.isEmpty) {
-                return Container(height : MediaQuery.of(context).size.height*0.5 ,width: MediaQuery.of(context).size.width ,child: Column(mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset('assets/lottie/notfound.json',height: MediaQuery.of(context).size.height*0.2),
-                    Text('No Likes',style: TextStyle(color: Colors.red,fontWeight: FontWeight.bold,fontFamily: 'Times New Roman'),)
-                  ],
-                ));
+                return Container(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    width: MediaQuery.of(context).size.width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset('assets/lottie/notfound.json',
+                            height: MediaQuery.of(context).size.height * 0.2),
+                        const Text(
+                          'No Likes',
+                          style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Times New Roman'),
+                        )
+                      ],
+                    ));
               }
 
               return Wrap(
@@ -139,7 +168,7 @@ class _LikesPageState extends State<LikesPage> {
                 runSpacing: 5,
                 children: List.generate(
                   yourUserLikes.length,
-                      (index) {
+                  (index) {
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance
                           .collection('users')
@@ -147,21 +176,42 @@ class _LikesPageState extends State<LikesPage> {
                           .get(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return Container(); // You can show a placeholder or loading state
+                          return Container(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              width: MediaQuery.of(context).size.width,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Lottie.asset('assets/lottie/notfound.json',
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.2),
+                                  const Text(
+                                    'Loading......',
+                                    style: TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Times New Roman'),
+                                  )
+                                ],
+                              )); // You can show a placeholder or loading state
                         }
 
-                        var userData = snapshot.data!.data() as Map<String, dynamic>;
-                        var imageUrl = userData['images']; // Assuming you have a field 'profileImageUrl' in the user document
+                        var userData =
+                            snapshot.data!.data() as Map<String, dynamic>;
+                        var imageUrl = userData[
+                            'images']; // Assuming you have a field 'profileImageUrl' in the user document
                         var name = userData['username'];
 
                         return Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(5.0),
                           child: SizedBox(
-                            width: (size.width - 15) / 2,
+                            width: 178,
                             height: 210,
                             child: InkWell(
                               onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
                                   return CardDetails(
                                     profile: name,
                                     pic: imageUrl[0] ?? '',
@@ -176,7 +226,8 @@ class _LikesPageState extends State<LikesPage> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       image: DecorationImage(
-                                        image: NetworkImage(imageUrl[0] ?? ''), // Load image from the URL
+                                        image: NetworkImage(imageUrl[0] ??
+                                            ''), // Load image from the URL
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -246,13 +297,11 @@ class _LikesPageState extends State<LikesPage> {
     );
   }
 
-
-
   Widget getFooter() {
     var size = MediaQuery.of(context).size;
     return SizedBox(
       width: size.width,
-      height: 90,
+      height: 70,
       child: Padding(
         padding: const EdgeInsets.only(top: 20),
         child: Column(

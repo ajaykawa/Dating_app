@@ -14,7 +14,7 @@ import 'package:tinderapp/data/explore_json.dart';
 import 'package:tinderapp/data/icons.dart';
 import 'package:tinderapp/widgets/filters_home_page.dart';
 import 'navigationbar.dart';
-
+import 'dart:ui' as ui;
 class ExplorePage extends StatefulWidget {
   @override
   _ExplorePageState createState() => _ExplorePageState();
@@ -137,20 +137,36 @@ class _ExplorePageState extends State<ExplorePage>
                     });
                   },
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                            'Woah!! You Got a \nmatch You want\n to Text him/her ..?',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, color: Colors.red),
-                            textAlign: TextAlign.center),
-                        Lottie.asset(
-                          'assets/lottie/send.json', // Replace with your animation file
-                          controller: _animationController,
-                          animate: false,
-                        ),
-                      ],
+                    child: Container(
+                      height: MediaQuery.of(context).size.height*0.3,
+                      width: MediaQuery.of(context).size.width*0.5,
+                      color: Colors.black12,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                           Text(
+                              'Woah!! You Got a \nmatch You want\n to Text him/her ..?',
+                              style: TextStyle(
+                                  foreground: Paint()
+                                    ..shader = ui.Gradient.linear(
+                                      const Offset(0, 60),
+                                      const Offset(150, 20),
+                                      <Color>[
+                                        Colors.lightBlueAccent,
+                                        Colors.redAccent,
+                                      ],
+                                    ),
+                                  // fontWeight: FontWeight.bold,
+                                  fontFamily: 'Times New Roman',
+                                  fontSize: 18),
+                              textAlign: TextAlign.center),
+                          Lottie.asset(
+                            'assets/lottie/send.json',height: 100, // Replace with your animation file
+                            controller: _animationController,
+                            animate: false,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
