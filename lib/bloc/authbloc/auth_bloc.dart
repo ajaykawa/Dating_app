@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -144,14 +145,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final userId = firebaseUser!.uid;
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(userId);
-
+final token = FirebaseMessaging.instance.getToken();
       emit(AuthLoaded());
       await userRef.set({
         'username': event.user,
         'UID': userId,
+        'mychats': [],
+        'devicetoken': '$token',
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('userId', userId);
+
       Get.to(() => const MaleFemale());
     } else {
       if (event.user.isEmpty) {

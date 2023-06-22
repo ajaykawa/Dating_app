@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
-import 'package:tinderapp/Screens/profile_card.dart';
-
-import 'package:flutter/material.dart';
 
 class TopPicks extends StatefulWidget {
   const TopPicks({Key? key}) : super(key: key);
@@ -17,31 +14,30 @@ class TopPicks extends StatefulWidget {
 
 class _TopPicksState extends State<TopPicks> {
   List<Map<String, dynamic>> matchingUsers = [];
-
   @override
   Widget build(BuildContext context) {
     Future<bool> showExitPopup() async {
       return await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Exit App'),
-              content: const Text('Do you want to exit the App?'),
-              actions: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(primary: Colors.purple),
-                  onPressed: () => Navigator.of(context).pop(false),
-                  // Return false when "NO" is clicked.
-                  child: const Text('No'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(primary: Colors.purple),
-                  onPressed: () => SystemNavigator.pop(),
-                  // Return true when "YES" is clicked.
-                  child: const Text('Yes'),
-                ),
-              ],
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Exit App'),
+          content: const Text('Do you want to exit the App?'),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(primary: Colors.purple),
+              onPressed: () => Navigator.of(context).pop(false),
+              // Return false when "NO" is clicked.
+              child: const Text('No'),
             ),
-          ) ??
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(primary: Colors.purple),
+              onPressed: () => SystemNavigator.pop(),
+              // Return true when "YES" is clicked.
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      ) ??
           false;
     }
 
@@ -52,7 +48,7 @@ class _TopPicksState extends State<TopPicks> {
           stream: FirebaseFirestore.instance
               .collection('users')
               .doc(FirebaseAuth.instance.currentUser?.uid)
-              .collection('interests')
+              .collection('userids')
               .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
@@ -76,15 +72,15 @@ class _TopPicksState extends State<TopPicks> {
                 ),
               );
             }
-
-            var currentUserInterests = <String>[];
+            var currentUserIds = <String>[];
             for (var doc in snapshot.data!.docs) {
-              currentUserInterests.add(doc.id);
+              currentUserIds.add(doc.id);
             }
 
             return StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('users').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return SizedBox(
@@ -93,8 +89,8 @@ class _TopPicksState extends State<TopPicks> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Lottie.asset('assets/lottie/notfound.json',
-                            height: MediaQuery.of(context).size.height * 0.2),
+                      Lottie.asset('assets/lottie/notfound.json',
+                        height: MediaQuery.of(context).size.height * 0.2),
                         const Text(
                           'Loading......',
                           style: TextStyle(
@@ -107,21 +103,26 @@ class _TopPicksState extends State<TopPicks> {
                     ),
                   );
                 }
+
                 matchingUsers.clear(); // Clear the previous matching users
 
                 snapshot.data!.docs.forEach((userDoc) {
                   var userData = userDoc.data() as Map<String, dynamic>;
-                  var userInterests = userData['Interests'] as List<dynamic>;
+                  var userInterestsCollection = userDoc.reference.collection('Interests');
 
-                  // Check if the user's interests intersect with yours
-                  var commonInterests = userInterests
-                      .toSet()
-                      .intersection(userInterests.toSet())
-                      .toList();
-                  if (commonInterests.isNotEmpty) {
-                    // Modify the condition as per your requirement (2 or 3 common interests)
-                    matchingUsers.add(userData);
-                  }
+                  userInterestsCollection.get().then((interestsSnapshot) {
+                    var userInterests = <String>[];
+                    for (var doc in interestsSnapshot.docs) {
+                      userInterests.add(doc.id);
+                    }
+
+                    var commonInterests = currentUserIds.toSet().intersection(userInterests.toSet());
+                    if (commonInterests.length >= 2) {
+                      matchingUsers.add(userData);
+                    }
+
+                    setState(() {});
+                  });
                 });
 
                 if (matchingUsers.isEmpty) {
@@ -147,7 +148,7 @@ class _TopPicksState extends State<TopPicks> {
                 }
 
                 return GridView.builder(
-                  itemCount: 4,
+                  itemCount: matchingUsers.length,
                   itemBuilder: (context, index) {
                     var userData = matchingUsers[index];
                     var imageUrl = userData['images'] as List<dynamic>;
@@ -161,19 +162,14 @@ class _TopPicksState extends State<TopPicks> {
                             context,
                             MaterialPageRoute(builder: (context) {
                               return const Gold();
-                              //   CardDetails(
-                              //   profile: name,
-                              //   pic: imageUrl[0] ?? '',
-                              // );
                             }),
                           );
                         },
                         child: Stack(
                           children: [
                             Container(
-                              width:
-                                  MediaQuery.of(context).size.width * 0.5,
-                              height: MediaQuery.of(context).size.height*0.6,
+                              width: MediaQuery.of(context).size.width * 0.5,
+                              height: MediaQuery.of(context).size.height * 0.6,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
                                 image: DecorationImage(
@@ -204,7 +200,7 @@ class _TopPicksState extends State<TopPicks> {
                                         width: 5,
                                       ),
                                       Text(
-                                        name ?? '',
+                                        name,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 14,
@@ -231,6 +227,7 @@ class _TopPicksState extends State<TopPicks> {
     );
   }
 }
+
 
 class Gold extends StatefulWidget {
   const Gold({Key? key}) : super(key: key);
@@ -371,7 +368,7 @@ class _GoldState extends State<Gold> {
                         borderRadius:
                             const BorderRadius.all(Radius.circular(20))),
                     child: ListView.builder(
-                      physics: const  NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: 6,
                       itemBuilder: (context, index) {
                         return Row(

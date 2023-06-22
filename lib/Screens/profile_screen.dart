@@ -165,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             MainAxisAlignment.center,
                                         children: [
                                           Text(
-                                            username,
+                                            username ?? '',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w600,
                                               fontSize: 18.sp,

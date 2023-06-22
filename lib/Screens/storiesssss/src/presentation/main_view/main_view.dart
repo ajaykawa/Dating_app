@@ -338,7 +338,7 @@ class _MainViewState extends State<MainView> {
                                   child: IconButton(
                                     icon: const Icon(Icons.camera,
                                         color: Colors.white, size: 35),
-                                    onPressed: _selectImage,
+                                    onPressed:  _selectImage,
                                   ),
                                 ),
                               ],

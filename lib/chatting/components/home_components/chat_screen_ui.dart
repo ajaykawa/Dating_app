@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../constants.dart';
@@ -12,6 +13,7 @@ class ChatScreenUi extends StatefulWidget {
   @override
   State<ChatScreenUi> createState() => _ChatScreenUiState();
 }
+
 class _ChatScreenUiState extends State<ChatScreenUi>
     with SingleTickerProviderStateMixin {
   final firebaseAuth = FirebaseAuth.instance;
@@ -20,6 +22,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
   RxInt currentIndex = 0.obs;
   int? tappedIndex;
   Timer? _timer;
+  String chatid = "";
   @override
   void initState() {
     final firebaseUser = firebaseAuth.currentUser;
@@ -28,6 +31,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
     _startTimer();
     super.initState();
   }
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       // Check if there are more chat items to display
@@ -40,6 +44,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
       }
     });
   }
+
   @override
   Widget build(BuildContext context) {
     final firebaseAuth = FirebaseAuth.instance;
@@ -57,7 +62,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
           }
           var userData = snapshot.data!.data() as Map<String, dynamic>;
           var usersss =
-          userData.containsKey('Match_with') ? userData['Match_with'] : [];
+              userData.containsKey('Match_with') ? userData['Match_with'] : [];
           if (usersss.isEmpty) {
             return Container(
               height: MediaQuery.of(context).size.height * 0.5,
@@ -98,20 +103,20 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                           radius: 26,
                           child: item.online!
                               ? Container(
-                            alignment: Alignment.bottomRight,
-                            child: Container(
-                              height: 20,
-                              width: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  width: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          )
+                                  alignment: Alignment.bottomRight,
+                                  child: Container(
+                                    height: 20,
+                                    width: 20,
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        width: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                )
                               : Container(),
                         ),
                         title: Row(
@@ -193,26 +198,56 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                         return Container(); // You can show a placeholder or loading state
                       }
                       var userData =
-                      snapshot.data!.data() as Map<String, dynamic>;
+                          snapshot.data!.data() as Map<String, dynamic>;
                       var imageUrl = userData[
-                      'images']; // Assuming you have a field 'profileImageUrl' in the user document
+                          'images']; // Assuming you have a field 'profileImageUrl' in the user document
                       var name = userData['username'];
                       return Column(
                         children: [
                           ListTile(
-                            onTap: () {
+                            onTap: () async {
+                              Map<Object, Object?> user1 = {};
+                              String? token =
+                                  await FirebaseMessaging.instance.getToken();
+                              print(
+                                  '///////////////////${userData['mychats']}');
+                              print(
+                                  '...................${'${currentUserId}${usersss[i]}'}');
+
+                              if (userData['mychats']
+                                  .contains('${currentUserId}${usersss[i]}')) {
+                                chatid = '${currentUserId}${usersss[i]}';
+                              } else if (userData['mychats']
+                                  .contains('${usersss[i]}${currentUserId}')) {
+                                chatid = '${usersss[i]}${currentUserId}';
+                              } else {
+                                user1 = {
+                                  'mychats': FieldValue.arrayUnion(
+                                      ["${currentUserId}${usersss[i]}"]),
+                                };
+                                chatid = "${currentUserId}${usersss[i]}";
+                              }
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(currentUserId)
+                                  .update(user1);
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(usersss[i])
+                                  .update(user1);
+
                               Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ConversationScreenUI(
-                                    email:
-                                    usersss[i],
-                                    name: name,
-                                    profilePic: imageUrl[i],
-                                  ),
-                                ),
-                              );
-                              print('?????????????$userId');  },
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Chat(
+                                        usersss[i],
+                                        token!,
+                                        currentUserId,
+                                        chatid,
+                                        name,
+                                        imageUrl[i]),
+                                  ));
+                            },
                             leading: CircleAvatar(
                               backgroundImage: NetworkImage(
                                 imageUrl.isNotEmpty
@@ -222,27 +257,27 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                               radius: 26,
                               child: dummyData[i].online!
                                   ? Container(
-                                alignment: Alignment.bottomRight,
-                                child: Container(
-                                  height: 20,
-                                  width: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      width: 2,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              )
+                                      alignment: Alignment.bottomRight,
+                                      child: Container(
+                                        height: 20,
+                                        width: 20,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            width: 2,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )
                                   : Container(),
                             ),
                             title: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  name,
+                                  name ?? '',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,

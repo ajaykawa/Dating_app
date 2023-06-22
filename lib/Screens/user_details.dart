@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,7 +23,7 @@ class _UserDetailsState extends State<UserDetails> {
   final TextEditingController email = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool isChecked = false;
-
+  String token = "";
   @override
   Widget build(BuildContext context) {
     final FormState? form = _formKey.currentState;
@@ -89,6 +92,7 @@ class _UserDetailsState extends State<UserDetails> {
                       Center(
                         child: GestureDetector(
                           onTap: () async {
+
                             BlocProvider.of<AuthBloc>(context).add(
                               SaveUserDetails(
                                 user: username.text,
