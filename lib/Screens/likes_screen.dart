@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -78,8 +80,7 @@ class _LikesPageState extends State<LikesPage> {
                 },
                 child: const Text(
                   "Likes",
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
               GestureDetector(
@@ -176,7 +177,7 @@ class _LikesPageState extends State<LikesPage> {
                           .get(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return Container(
+                          return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               width: MediaQuery.of(context).size.width,
                               child: Column(
@@ -226,8 +227,7 @@ class _LikesPageState extends State<LikesPage> {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       image: DecorationImage(
-                                        image: NetworkImage(imageUrl[0] ??
-                                            ''), // Load image from the URL
+                                        image: NetworkImage(imageUrl[0] ?? ''),
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -237,47 +237,76 @@ class _LikesPageState extends State<LikesPage> {
                                     height: 250,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          black.withOpacity(0.25),
-                                          black.withOpacity(0),
-                                        ],
-                                        end: Alignment.topCenter,
-                                        begin: Alignment.bottomCenter,
-                                      ),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8,
-                                            bottom: 8,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(
+                                            sigmaX: 5, sigmaY: 5),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.black.withOpacity(0.4),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
-                                          child: Row(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
-                                              Container(
-                                                width: 8,
-                                                height: 8,
-                                                decoration: const BoxDecoration(
-                                                  color: green,
-                                                  shape: BoxShape.circle,
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 8,
+                                                  bottom: 8,
                                                 ),
-                                              ),
-                                              const SizedBox(
-                                                width: 5,
-                                              ),
-                                              Text(
-                                                name ?? '',
-                                                style: const TextStyle(
-                                                  color: white,
-                                                  fontSize: 14,
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 8,
+                                                      height: 8,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        color: Colors.green,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Stack(
+                                                      children: [
+                                                        Container(
+                                                          child: Text(
+                                                            name ?? '',
+                                                            style:
+                                                                const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    color: Colors
+                                                                        .white),
+                                                          ),
+                                                        ),
+                                                        BackdropFilter(
+                                                          filter:
+                                                              ImageFilter.blur(
+                                                            sigmaX: 5,
+                                                            sigmaY: 5,
+                                                          ),
+                                                          child: Container(
+                                                            color: Colors.black
+                                                                .withOpacity(
+                                                                    0.8),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
+                                              )
                                             ],
                                           ),
-                                        )
-                                      ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],

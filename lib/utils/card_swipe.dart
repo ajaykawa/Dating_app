@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_tindercard/flutter_tindercard.dart';
+import 'package:geodesy/geodesy.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tinderapp/Screens/profile_card.dart';
@@ -15,6 +17,7 @@ import 'package:tinderapp/data/icons.dart';
 import 'package:tinderapp/widgets/filters_home_page.dart';
 import 'navigationbar.dart';
 import 'dart:ui' as ui;
+
 class ExplorePage extends StatefulWidget {
   @override
   _ExplorePageState createState() => _ExplorePageState();
@@ -34,6 +37,7 @@ class _ExplorePageState extends State<ExplorePage>
   int currentIndex = 0; // Current index of the card
   List<int> swipedIndices = [];
   List<int> _swipedIndices = [];
+  Position? _currentPosition;
   int? previousIndex;
   AnimationController? _animationController;
   late SharedPreferences sharedPreferences;
@@ -41,7 +45,7 @@ class _ExplorePageState extends State<ExplorePage>
   void initState() {
     final firebaseUser = firebaseAuth.currentUser;
     currentUserId = firebaseUser!.uid;
-
+    _getCurrentLocation();
     users = [];
     setState(() {
       itemsTemp = explore_json;
@@ -54,7 +58,6 @@ class _ExplorePageState extends State<ExplorePage>
     restoreLastSwipedIndex();
     super.initState();
   }
-
 
   Future<void> restoreLastSwipedIndex() async {
     final prefs = await SharedPreferences.getInstance();
@@ -69,6 +72,7 @@ class _ExplorePageState extends State<ExplorePage>
     swipedIndices.add(index);
     await prefs.setInt('lastSwipedIndex', index);
   }
+
   void showLeftLabel() {
     setState(() {
       labelVisible = true;
@@ -93,6 +97,18 @@ class _ExplorePageState extends State<ExplorePage>
   String generateMatchId(String userId1, String userId2) {
     final sortedUserIds = [userId1, userId2]..sort();
     return '${sortedUserIds[0]}_${sortedUserIds[1]}';
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _currentPosition = position;
+      });
+    } catch (e) {
+      print('Error getting current location: $e');
+    }
   }
 
   @override
@@ -132,19 +148,21 @@ class _ExplorePageState extends State<ExplorePage>
                     Future.delayed(const Duration(seconds: 1), () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return MyNavigationBar();
+                        return MyNavigationBar(
+                          i: 2,
+                        );
                       }));
                     });
                   },
                   child: Center(
                     child: Container(
-                      height: MediaQuery.of(context).size.height*0.3,
-                      width: MediaQuery.of(context).size.width*0.5,
+                      height: MediaQuery.of(context).size.height * 0.3,
+                      width: MediaQuery.of(context).size.width * 0.5,
                       color: Colors.black12,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                           Text(
+                          Text(
                               'Woah!! You Got a \nmatch You want\n to Text him/her ..?',
                               style: TextStyle(
                                   foreground: Paint()
@@ -161,7 +179,8 @@ class _ExplorePageState extends State<ExplorePage>
                                   fontSize: 18),
                               textAlign: TextAlign.center),
                           Lottie.asset(
-                            'assets/lottie/send.json',height: 100, // Replace with your animation file
+                            'assets/lottie/send.json',
+                            height: 100, // Replace with your animation file
                             controller: _animationController,
                             animate: false,
                           ),
@@ -178,8 +197,6 @@ class _ExplorePageState extends State<ExplorePage>
       transitionDuration: const Duration(seconds: 2),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -239,8 +256,35 @@ class _ExplorePageState extends State<ExplorePage>
                         (doc.data() as Map<String, dynamic>)['username'] ?? '',
                     images: List<String>.from(
                         (doc.data() as Map<String, dynamic>)['images'] ?? []),
+                    latitude:
+                        (doc.data() as Map<String, dynamic>)['Latitude'] ?? 0.0,
+                    longitude:
+                        (doc.data() as Map<String, dynamic>)['Longitude'] ??
+                            0.0,
                   ))
-              .toList();
+              .where((user) {
+            if (user.latitude != null && user.longitude != null) {
+              final userLocation = LatLng(user.latitude, user.longitude);
+              final distance = Geodesy().distanceBetweenTwoGeoPoints(
+                LatLng(_currentPosition?.latitude, _currentPosition?.longitude),
+                userLocation,
+              );
+              // Change the radius value as needed
+              const double radius = 10.0; // in kilometers
+              return distance <= radius * 1000; // convert radius to meters
+            } else {
+              docs.where((doc) => doc.id != currentUserId).map((doc) => User(
+                    id: doc.id,
+                    username:
+                        (doc.data() as Map<String, dynamic>)['userna me'] ?? '',
+                    images: List<String>.from(
+                        (doc.data() as Map<String, dynamic>)['images'] ?? []),
+                  ));
+            }
+            return false;
+          }).toList();
+
+          // Perform any other actions with the filtered users
 
           final firebaseAuth = FirebaseAuth.instance;
           return Padding(
@@ -396,14 +440,11 @@ class _ExplorePageState extends State<ExplorePage>
                           });
                         }
                       },
-
                       maxWidth: MediaQuery.of(context).size.width,
                       maxHeight: MediaQuery.of(context).size.height * 0.6,
                       minWidth: MediaQuery.of(context).size.width * 0.75,
                       minHeight: MediaQuery.of(context).size.height * 0.4,
-
                       cardBuilder: (context, index) {
-
                         final user = users[index % users.length];
                         return Stack(
                           children: [
@@ -788,9 +829,17 @@ class _ExplorePageState extends State<ExplorePage>
 }
 
 class User {
-  String id;
-  String username;
-  List<String> images;
+  final String id;
+  final String username;
+  final List<String> images;
+  final double? latitude;
+  final double? longitude;
 
-  User({required this.id, required this.username, required this.images});
+  User({
+    required this.id,
+    required this.username,
+    required this.images,
+    this.latitude,
+    this.longitude,
+  });
 }

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,30 +16,32 @@ class TopPicks extends StatefulWidget {
 
 class _TopPicksState extends State<TopPicks> {
   List<Map<String, dynamic>> matchingUsers = [];
+  List<Map<String, dynamic>> randomUsers = [];
+
   @override
   Widget build(BuildContext context) {
     Future<bool> showExitPopup() async {
       return await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Exit App'),
-          content: const Text('Do you want to exit the App?'),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(primary: Colors.purple),
-              onPressed: () => Navigator.of(context).pop(false),
-              // Return false when "NO" is clicked.
-              child: const Text('No'),
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Exit App'),
+              content: const Text('Do you want to exit the App?'),
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(primary: Colors.purple),
+                  onPressed: () => Navigator.of(context).pop(false),
+                  // Return false when "NO" is clicked.
+                  child: const Text('No'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(primary: Colors.purple),
+                  onPressed: () => SystemNavigator.pop(),
+                  // Return true when "YES" is clicked.
+                  child: const Text('Yes'),
+                ),
+              ],
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(primary: Colors.purple),
-              onPressed: () => SystemNavigator.pop(),
-              // Return true when "YES" is clicked.
-              child: const Text('Yes'),
-            ),
-          ],
-        ),
-      ) ??
+          ) ??
           false;
     }
 
@@ -45,189 +49,286 @@ class _TopPicksState extends State<TopPicks> {
       onWillPop: showExitPopup,
       child: Scaffold(
         body: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(FirebaseAuth.instance.currentUser?.uid)
-              .collection('userids')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.5,
-                width: MediaQuery.of(context).size.width,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset('assets/lottie/notfound.json',
-                        height: MediaQuery.of(context).size.height * 0.2),
-                    const Text(
-                      'Loading......',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Times New Roman',
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-            var currentUserIds = <String>[];
-            for (var doc in snapshot.data!.docs) {
-              currentUserIds.add(doc.id);
-            }
-
-            return StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    width: MediaQuery.of(context).size.width,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(FirebaseAuth.instance.currentUser?.uid)
+                .collection('userids')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  width: MediaQuery.of(context).size.width,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Lottie.asset('assets/lottie/notfound.json',
-                        height: MediaQuery.of(context).size.height * 0.2),
-                        const Text(
-                          'Loading......',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Times New Roman',
-                          ),
+                          height: MediaQuery.of(context).size.height * 0.2),
+                      const Text(
+                        'Loading......',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Times New Roman',
                         ),
-                      ],
-                    ),
-                  );
-                }
+                      ),
+                    ],
+                  ),
+                );
+              }
+              var currentUserIds = <String>[];
+              for (var doc in snapshot.data!.docs) {
+                currentUserIds.add(doc.id);
+              }
 
-                matchingUsers.clear(); // Clear the previous matching users
-
-                snapshot.data!.docs.forEach((userDoc) {
-                  var userData = userDoc.data() as Map<String, dynamic>;
-                  var userInterestsCollection = userDoc.reference.collection('Interests');
-
-                  userInterestsCollection.get().then((interestsSnapshot) {
-                    var userInterests = <String>[];
-                    for (var doc in interestsSnapshot.docs) {
-                      userInterests.add(doc.id);
-                    }
-
-                    var commonInterests = currentUserIds.toSet().intersection(userInterests.toSet());
-                    if (commonInterests.length >= 2) {
-                      matchingUsers.add(userData);
-                    }
-
-                    setState(() {});
-                  });
-                });
-
-                if (matchingUsers.isEmpty) {
-                  return SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    width: MediaQuery.of(context).size.width,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Lottie.asset('assets/lottie/notfound.json',
-                            height: MediaQuery.of(context).size.height * 0.2),
-                        const Text(
-                          'No matching interests',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Times New Roman',
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return GridView.builder(
-                  itemCount: matchingUsers.length,
-                  itemBuilder: (context, index) {
-                    var userData = matchingUsers[index];
-                    var imageUrl = userData['images'] as List<dynamic>;
-                    var name = userData['username'] as String;
-
-                    return Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return const Gold();
-                            }),
-                          );
-                        },
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: MediaQuery.of(context).size.width * 0.5,
-                              height: MediaQuery.of(context).size.height * 0.6,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                image: DecorationImage(
-                                  image: NetworkImage(imageUrl[0] ?? ''),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
+              return StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance.collection('users').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Lottie.asset('assets/lottie/notfound.json',
+                              height: MediaQuery.of(context).size.height * 0.2),
+                          const Text(
+                            'Loading......',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Times New Roman',
                             ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 8,
-                                    bottom: 8,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.green,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: 5,
-                                      ),
-                                      Text(
-                                        name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
-                  },
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2),
-                );
-              },
-            );
-          },
-        ),
+                  }
+
+                  matchingUsers.clear(); // Clear the previous matching users
+                  randomUsers.clear(); // Clear the previous random users
+
+                  snapshot.data!.docs.forEach((userDoc) {
+                    var userData = userDoc.data() as Map<String, dynamic>;
+                    var userId = userDoc.id;
+
+                    if (currentUserIds.contains(userId)) {
+                      matchingUsers.add(userData);
+                    } else if (userId !=
+                        FirebaseAuth.instance.currentUser?.uid) {
+                      randomUsers.add(userData);
+                    }
+                  });
+
+                  // Shuffle and get 50% of the random users
+                  randomUsers.shuffle();
+                  var randomUsersCount = (randomUsers.length * 0.5).ceil();
+                  randomUsers = randomUsers.sublist(0, randomUsersCount);
+
+                  if (matchingUsers.isEmpty && randomUsers.isEmpty) {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Lottie.asset('assets/lottie/notfound.json',
+                              height: MediaQuery.of(context).size.height * 0.2),
+                          const Text(
+                            'No matching interests',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Times New Roman',
+                            ),
+                          ),
+                        ],
+                      ),
+                    );}
+
+                return  GridView.builder(
+                    itemCount: matchingUsers.length + randomUsers.length,
+                    itemBuilder: (context, index) {
+                      if (index < matchingUsers.length) {
+                        var userData = matchingUsers[index];
+                        var imageUrl = userData['images'] as List<dynamic>;
+                        var name = userData['username'] as String;
+
+                        return Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return const Gold();
+                                }),
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width * 0.5,
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      imageUrl[0] ?? '',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: MediaQuery.of(context).size.width * 0.5,
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.4),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                bottom: 8,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.green,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        var userData = randomUsers[index - matchingUsers.length];
+                        var imageUrl = userData['images'] as List<dynamic>;
+                        var name = userData['username'] as String;
+
+                        return Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return const Gold();
+                                }),
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width * 0.5,
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      imageUrl[0] ?? '',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: MediaQuery.of(context).size.width * 0.5,
+                                  height: MediaQuery.of(context).size.height * 0.6,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.4),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                bottom: 8,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.green,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 5,
+                                                  ),
+                                                  Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                    ),
+                  );
+
+                },
+              );
+            }),
       ),
     );
   }
 }
-
 
 class Gold extends StatefulWidget {
   const Gold({Key? key}) : super(key: key);

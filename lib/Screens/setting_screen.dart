@@ -26,22 +26,22 @@ class _SettingScreenState extends State<SettingScreen> {
   final String endpointUrl = 'https://instagram40.p.rapidapi.com/user';
   final String apiKey = '546d08d7d6msh86fe495a5956baep194bbcjsn6c888db13bee';
 
-
   Future<String?> _connectInstagramAccount() async {
     const authorizationUrl =
         'https://instagram28.p.rapidapi.com/media_info_v2?short_code=CA_ifcxMjFR';
 
     try {
-      final result = await FlutterWebAuth.authenticate(url: authorizationUrl, callbackUrlScheme: 'https');
+      final result = await FlutterWebAuth.authenticate(
+          url: authorizationUrl, callbackUrlScheme: 'https');
       final params = Uri.parse(result).fragment.split('&');
-      final token = params.firstWhere((p) => p.startsWith('access_token=')).split('=')[1];
+      final token =
+          params.firstWhere((p) => p.startsWith('access_token=')).split('=')[1];
       return token;
     } catch (e) {
-     print(">>>>>>>>>>>>>>>>>>>>>>>$e");
+      print(">>>>>>>>>>>>>>>>>>>>>>>$e");
       return null;
     }
   }
-
 
   Future<String?> _getInstagramUsername(String accessToken) async {
     final response = await http.get(
@@ -76,7 +76,6 @@ class _SettingScreenState extends State<SettingScreen> {
     }
   }
 
-  RangeValues _currentRangeValues = const RangeValues(20, 60);
   int distance = 10;
 
   @override
@@ -139,7 +138,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       children: [
                         Container(
                           height: 100.h,
-                          width: MediaQuery.of(context).size.width * 0.45.w,
+                          width: MediaQuery.of(context).size.width * 0.40.w,
                           decoration: const BoxDecoration(
                               borderRadius: BorderRadius.all(
                                 Radius.circular(12),
@@ -367,61 +366,6 @@ class _SettingScreenState extends State<SettingScreen> {
                                     )),
                               ],
                             ),
-                            Divider(
-                              thickness: 2,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  'Age Prefer',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 18.sp),
-                                ),
-                                Text(
-                                  '${_currentRangeValues}',
-                                  style: TextStyle(
-                                      fontSize: 12.0.sp, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            RangeSlider(
-                              values: _currentRangeValues,
-                              inactiveColor: Colors.grey,
-                              activeColor: Colors.red,
-                              min: 0,
-                              max: 100,
-                              divisions: 20,
-                              labels: RangeLabels(
-                                _currentRangeValues.start.round().toString(),
-                                _currentRangeValues.end.round().toString(),
-                              ),
-                              onChanged: (RangeValues values) {
-                                setState(() {
-                                  _currentRangeValues = values;
-                                });
-                              },
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  'Only Show People in this range',
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 18.sp),
-                                ),
-                                Transform.scale(
-                                    scale: 1,
-                                    child: Switch(
-                                      onChanged: toggleSwitch,
-                                      value: isSwitched,
-                                      activeColor: Colors.white,
-                                      activeTrackColor: Colors.red,
-                                      inactiveThumbColor: Colors.white,
-                                      inactiveTrackColor: Colors.grey,
-                                    )),
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -429,9 +373,6 @@ class _SettingScreenState extends State<SettingScreen> {
                     Center(
                       child: GestureDetector(
                         onTap: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove(
-                              'userId'); // Remove the user ID from shared preferences
                           // Navigate to the login screen
                           Get.offAll(() => const LoginOptions());
                         },
@@ -481,7 +422,6 @@ class SettingOffers extends StatelessWidget {
   final String texts;
   final String img;
   const SettingOffers({
-
     required this.colors,
     required this.texts,
     required this.img,

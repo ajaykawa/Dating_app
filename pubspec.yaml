@@ -73,6 +73,7 @@ dependencies:
   firebase_messaging:
   flutter_local_notifications: ^14.1.1
   async:
+  geodesy:
 
 
 

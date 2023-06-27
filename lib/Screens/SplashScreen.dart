@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final nextScreen =
-        userId != null ?  MyNavigationBar() : const StartScreen();
+        userId != null ?  MyNavigationBar(i: 3,) : const StartScreen();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => nextScreen),
     );

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pin_input_text_field/pin_input_text_field.dart';
 
 import '../bloc/authbloc/auth_bloc.dart';

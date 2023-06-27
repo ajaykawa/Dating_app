@@ -158,7 +158,7 @@ TextEditingController EduController = TextEditingController();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) {
-                                        return  MyNavigationBar();
+                                        return  MyNavigationBar(i: 3,);
                                       },
                                     ),
                                   );

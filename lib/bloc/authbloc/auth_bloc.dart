@@ -119,7 +119,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             .doc(currentUser.uid)
             .get();
         if (userDoc.exists == currentUser.uid) {
-          Get.offAll(MyNavigationBar()); // navigate to the main screen
+          Get.offAll(MyNavigationBar(i: 3,)); // navigate to the main screen
         } else {
           Get.to(const UserDetails()); // navigate to the user details screen
         }
@@ -195,7 +195,7 @@ final token = FirebaseMessaging.instance.getToken();
       await user.set(<String, dynamic>{
         'Interests': event.allinterests,
       }, SetOptions(merge: true));
-      Get.to(MyNavigationBar());
+      Get.to(MyNavigationBar(i: 3,));
     } else {
       errorSnackbar("Select Atleast 5 interests!");
     }

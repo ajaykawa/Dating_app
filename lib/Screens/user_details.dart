@@ -67,11 +67,9 @@ class _UserDetailsState extends State<UserDetails> {
                 body: Padding(
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Lottie.asset("assets/lottie/103657-user.json",
-                          height: 200),
+                          height: 100),
                       SizedBox(height: 10.h),
                       Center(
                         child:  Text("What's your Name ?",
@@ -88,7 +86,7 @@ class _UserDetailsState extends State<UserDetails> {
                         textAlign: TextAlign.start,
                         validator: (value) {},
                       ),
-                      const Spacer(),
+                      SizedBox(height: 5.h),
                       Center(
                         child: GestureDetector(
                           onTap: () async {

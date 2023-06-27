@@ -40,7 +40,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
           currentIndex++;
         });
       } else {
-        _timer?.cancel(); // Cancel the timer when all chat items are displayed
+        _timer?.cancel();
       }
     });
   }
@@ -54,7 +54,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
       child: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .doc(FirebaseAuth.instance.currentUser?.uid)
+            .doc(userId)
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -98,7 +98,7 @@ class _ChatScreenUiState extends State<ChatScreenUi>
                         },
                         leading: CircleAvatar(
                           backgroundImage: NetworkImage(
-                            item.avatarUrl!, // Assuming the first image is the profile picture
+                            item.avatarUrl!,
                           ),
                           radius: 26,
                           child: item.online!

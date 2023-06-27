@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:tinderapp/Screens/profile_edit.dart';
 import 'package:tinderapp/Screens/setting_screen.dart';
@@ -11,12 +14,10 @@ import 'package:tinderapp/data/lists_.dart';
 import '../const.dart';
 import '../data/explore_json.dart';
 
-
 double total = 0;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -28,6 +29,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    getUserLocation();
+
     setState(() {
       itemsTemp = explore_json;
       itemLength = explore_json.length;
@@ -107,14 +110,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Container(
                         width: size.width.w,
-                        height: size.height * 0.5.h,
+                        height: size.height * 0.35.h,
                         decoration:
                             const BoxDecoration(color: white, boxShadow: []),
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 30, right: 30),
+                          padding: const EdgeInsets.only(left: 30, right: 30),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               Row(
                                 mainAxisAlignment:
@@ -158,41 +159,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       backgroundImage:
                                           NetworkImage(firstImage!),
                                     ),
-                                    footer: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            username ?? '',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 18.sp,
-                                            ),
-                                          ),
-                                          if (aboutme != null &&
-                                              languages != null &&
-                                              Pets != null &&
-                                              Drinking != null &&
-                                              Smoking != null &&
-                                              Diets != null &&
-                                              job != null &&
-                                              education != null &&
-                                              relationType != null &&
-                                              relationshipgoals != null)
-                                            Image.asset(
-                                              'assets/icons/verify.png',
-                                              height: 24.h,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
                                     circularStrokeCap: CircularStrokeCap.round,
                                     progressColor: Colors.pink,
                                   ),
                                   Positioned(
-                                    left: 200,
+                                    left: 125,
                                     child: GestureDetector(
                                       onTap: () {
                                         Navigator.of(context).push(
@@ -203,52 +174,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         );
                                       },
                                       child: CircleAvatar(
-                                        radius: 25.r,
+                                        radius: 20.r,
                                         backgroundColor: Colors.grey.shade100,
                                         child: const Icon(Icons.edit,
                                             color: Colors.black),
                                       ),
                                     ),
                                   ),
-                                  Positioned(
-                                    top: 120.h,
-                                    left: 80.w,
-                                    child: Container(
-                                      height: 40.h,
-                                      width: 160.w,
-                                      decoration: BoxDecoration(
-                                          color: Colors.redAccent,
-                                          borderRadius: const BorderRadius.all(
-                                              Radius.circular(20)),
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topRight,
-                                            end: Alignment.bottomLeft,
-                                            stops: const [
-                                              0.1,
-                                              0.4,
-                                              0.6,
-                                              0.9,
-                                            ],
-                                            colors: [
-                                              Colors.purple.shade600,
-                                              Colors.purple.shade300,
-                                              Colors.purple.shade200,
-                                              Colors.purple.shade700,
-                                            ],
-                                          )),
-                                      child: Center(
-                                        child: Text(
-                                            total.toInt() + 30 == 100
-                                                ? '100 % Complete'
-                                                : '${total.toInt() + 30} % COMPLETE',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16.sp,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
+                                ],
+                              ),
+                              SizedBox(height: 5.h),
+                              Container(
+                                height: 35.h,
+                                width: 160.w,
+                                decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(20),
+                                    ),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topRight,
+                                      end: Alignment.bottomLeft,
+                                      stops: const [
+                                        0.1,
+                                        0.4,
+                                        0.6,
+                                        0.9,
+                                      ],
+                                      colors: [
+                                        Colors.purple.shade600,
+                                        Colors.purple.shade300,
+                                        Colors.purple.shade200,
+                                        Colors.purple.shade700,
+                                      ],
+                                    )),
+                                child: Center(
+                                  child: Text(
+                                      total.toInt() + 30 == 100
+                                          ? '100 % Complete'
+                                          : '${total.toInt() + 30} % COMPLETE',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    username ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 18.sp,
                                     ),
                                   ),
+                                  if (aboutme != null &&
+                                      languages != null &&
+                                      Pets != null &&
+                                      Drinking != null &&
+                                      Smoking != null &&
+                                      Diets != null &&
+                                      job != null &&
+                                      education != null &&
+                                      relationType != null &&
+                                      relationshipgoals != null)
+                                    Image.asset(
+                                      'assets/icons/verify.png',
+                                      height: 24.h,
+                                    ),
                                 ],
                               ),
                             ],
@@ -718,12 +714,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
   }
 
-// Future<String> getUsername() async {
-//   var collection = FirebaseFirestore.instance.collection('users');
-//   var querySnapshot = await collection.get();
-//   for (var queryDocumentSnapshot in querySnapshot.docs) {
-//     Map<String, dynamic> data = queryDocumentSnapshot.data();
-//     var name = data['imagepaths'];
-//     var phone = data['phone'];
-//   }
+   getUserLocation() async {
+    // Check if location service is enabled
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location service is not enabled, handle accordingly
+      return;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Location permission is not granted, handle accordingly
+        return;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      // Location permissions are permanently denied, handle accordingly
+      return;
+    }
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    // Extract sub-street and street information
+    if (placemarks.isNotEmpty) {
+      Placemark placemark = placemarks[0];
+      // Initialize Firebase
+      final firebaseAuth = FirebaseAuth.instance;
+      final firebaseUser = firebaseAuth.currentUser;
+      final userId = firebaseUser!.uid;
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(userId);
+      userRef.set({
+        'Address':
+            '${placemark.locality},${placemark.subLocality},${placemark.administrativeArea},${placemark.subAdministrativeArea},${placemark.country},${placemark.street},${placemark.thoroughfare}' ??
+                '',
+        'Latitude': position.latitude,
+        'Longitude': position.longitude,
+      }, SetOptions(merge: true));
+    }
+    return placemarks;
+  }
 }

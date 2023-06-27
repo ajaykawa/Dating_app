@@ -9,29 +9,24 @@ class Filters extends StatefulWidget {
 }
 
 class _FiltersState extends State<Filters> {
-
   bool isSwitched = false;
   var textValue = 'Switch is OFF';
 
   void toggleSwitch(bool value) {
-
-    if(isSwitched == false)
-    {
+    if (isSwitched == false) {
       setState(() {
         isSwitched = true;
         textValue = 'Switch Button is ON';
       });
-    }
-    else
-    {
+    } else {
       setState(() {
         isSwitched = false;
         textValue = 'Switch Button is OFF';
       });
     }
   }
-  RangeValues _currentRangeValues = const RangeValues(20, 60);
-  int distance = 10;
+
+  int distance = 1000;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,10 +41,9 @@ class _FiltersState extends State<Filters> {
             ),
             GestureDetector(
               onTap: () {
-
                 Navigator.pop(context);
               },
-              child:  Text(
+              child: Text(
                 'Done',
                 style: TextStyle(color: Colors.grey, fontSize: 18.sp),
               ),
@@ -64,13 +58,13 @@ class _FiltersState extends State<Filters> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                 Text(
+                Text(
                   'Distance Preference',
                   style: TextStyle(color: Colors.grey, fontSize: 18.sp),
                 ),
                 Text(
                   '${distance}km',
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 20.0.sp,
                   ),
                 ),
@@ -90,59 +84,13 @@ class _FiltersState extends State<Filters> {
               min: 5,
               max: 100,
             ),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                 Text('Only Show People in this range',style: TextStyle(color: Colors.grey,fontSize: 18.sp),),
-                Transform.scale(
-                    scale: 1,
-                    child: Switch(
-                      onChanged: toggleSwitch,
-                      value: isSwitched,
-                      activeColor: Colors.white,
-                      activeTrackColor: Colors.red,
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: Colors.grey,
-                    )
-                ),
-
-              ],
-            ),
-            const Divider(thickness: 2,),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                const Text(
-                  'Age Preference',
-                  style: TextStyle(color: Colors.grey, fontSize: 18),
-                ),
                 Text(
-                  '$_currentRangeValues',
-                  style:  TextStyle(
-                    fontSize: 18.0.sp,color: Colors.grey
-                  ),
+                  'Only Show People in this range',
+                  style: TextStyle(color: Colors.grey, fontSize: 18.sp),
                 ),
-              ],
-            ),
-            RangeSlider(
-              values: _currentRangeValues,
-              inactiveColor: Colors.grey,
-              activeColor: Colors.red,
-              min: 0,
-              max: 100,
-              divisions: 50,
-              labels: RangeLabels(
-                _currentRangeValues.start.round().toString(),
-                _currentRangeValues.end.round().toString(),
-              ),
-              onChanged: (RangeValues values) {
-                setState(() {
-                  _currentRangeValues = values;
-                });
-              },
-            ),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                 Text('Only Show People in this range',style: TextStyle(color: Colors.grey,fontSize: 18.sp),),
                 Transform.scale(
                     scale: 1,
                     child: Switch(
@@ -152,9 +100,7 @@ class _FiltersState extends State<Filters> {
                       activeTrackColor: Colors.red,
                       inactiveThumbColor: Colors.white,
                       inactiveTrackColor: Colors.grey,
-                    )
-                ),
-
+                    )),
               ],
             ),
           ],

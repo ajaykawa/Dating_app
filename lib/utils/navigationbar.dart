@@ -6,13 +6,16 @@ import '../chatting/whatsapp_home.dart';
 import 'card_swipe.dart';
 
 class MyNavigationBar extends StatefulWidget {
+  late  int i;
+
+   MyNavigationBar({super.key, required this.i});
 
   @override
   _MyNavigationBarState createState() => _MyNavigationBarState();
 }
 
 class _MyNavigationBarState extends State<MyNavigationBar> {
-  int _selectedIndex = 2;
+
   static final List<Widget> _widgetOptions = [
     ExplorePage(),
      LikesPage(),
@@ -22,7 +25,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      widget.i = index;
     });
   }
 
@@ -30,7 +33,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+        child: _widgetOptions.elementAt(widget.i),
       ),
       bottomNavigationBar: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
@@ -49,7 +52,7 @@ class _MyNavigationBarState extends State<MyNavigationBar> {
                 label: 'Profile'),
           ],
           type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
+          currentIndex: widget.i,
           selectedItemColor: Colors.black,
           iconSize: 40,
           onTap: _onItemTapped,

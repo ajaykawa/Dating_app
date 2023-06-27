@@ -278,7 +278,6 @@ class _ChatState extends State<Chat> {
                               String sender, String reciever, String msg) {
                             final DatabaseReference reference =
                                 database.ref().child(chatid);
-
                             final Map<String, dynamic> data = {
                               'sender': sender,
                               'receiver': reciever,
@@ -289,7 +288,6 @@ class _ChatState extends State<Chat> {
                           }
                           // var _firestore = FirebaseFirestore.instance;
                           // final querySnapshot = await _firestore.collection('users').doc(widget.recieveid);
-
                           addData(widget.sendid, widget.recieveid, msg.text);
                           Future<void> sendNotification(
                               String serverKey,
@@ -298,12 +296,10 @@ class _ChatState extends State<Chat> {
                               String body) async {
                             final url = Uri.parse(
                                 'https://fcm.googleapis.com/fcm/send');
-
                             final headers = {
                               'Content-Type': 'application/json',
                               'Authorization': 'key=$serverKey',
                             };
-
                             final payload = {
                               'notification': {
                                 'title': title,
@@ -311,13 +307,11 @@ class _ChatState extends State<Chat> {
                               },
                               'to': deviceToken,
                             };
-
                             final response = await http.post(
                               url,
                               headers: headers,
                               body: jsonEncode(payload),
                             );
-
                             if (response.statusCode == 200) {
                               if (kDebugMode) {
                                 print('Notification sent successfully');
@@ -329,7 +323,6 @@ class _ChatState extends State<Chat> {
                               }
                             }
                           }
-
                           if (kDebugMode) {
                             print("object");
                           }
@@ -341,7 +334,6 @@ class _ChatState extends State<Chat> {
                               token,
                               widget.sendid,
                               msg.text);
-
                           msg.text = "";
                           _scrollToBottom();
                         },
